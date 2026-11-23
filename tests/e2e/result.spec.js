@@ -41,8 +41,11 @@ test("solving the same ID again shows the personal best", async ({ page }) => {
   const best = page.locator('dialog#completion [data-field="your-best"]');
   if (secs(second) < secs(first)) {
     await expect(best).toHaveText(`${second.trim()} (new)`);
-  } else {
+  } else if (secs(second) > secs(first)) {
     await expect(best).toHaveText(first.trim());
+  } else {
+    // Same shown second: the milliseconds decide whether it is a new best.
+    await expect(best).toHaveText(new RegExp(`^${first.trim()}( \\(new\\))?$`));
   }
 });
 
