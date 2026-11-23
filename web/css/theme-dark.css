@@ -1,0 +1,78 @@
+/* Dark theme: board style D "Dark tiles" (design/board-styles.html).
+   Applies when the device is dark and no light theme is chosen, or when
+   dark is chosen by hand. The two blocks must stay identical. */
+@media (prefers-color-scheme: dark) {
+  html:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page-bg: #0e0f12;
+    --panel: #1c1e23;
+    --text: #e9ecf1;
+    --muted: #98a0ad;
+    --line: #34383f;
+    --control-bg: #24272d;
+    --accent: #3f7cf0;
+    --accent-text: #ffffff;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+
+    --board-bg: #14161a;
+    --board-pad: 2.2cqw;
+    --board-border: 0;
+    --board-radius: 12px;
+    --box-gap: 1.6cqw;
+    --box-bg: transparent;
+    --cell-gap: 0.7cqw;
+    --cell-radius: 5px;
+    --cell-bg: #23262d;
+    --given-bg: #2c3038;
+
+    --given: #ffffff;
+    --given-weight: 600;
+    --user: #5ed3a4;
+    --cand: #9aa3b2;
+    --peer-bg: #2a3140;
+    --same-bg: #23262d;
+    --same-ring: inset 0 0 0 1.5px #5ed3a4;
+    --sel-bg: #3a4a66;
+    --sel-ring: inset 0 0 0 2px #7aa7ff;
+    --bad: #ff6b6b;
+    --bad-bg: #3a2226;
+  }
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --page-bg: #0e0f12;
+  --panel: #1c1e23;
+  --text: #e9ecf1;
+  --muted: #98a0ad;
+  --line: #34383f;
+  --control-bg: #24272d;
+  --accent: #3f7cf0;
+  --accent-text: #ffffff;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+
+  --board-bg: #14161a;
+  --board-pad: 2.2cqw;
+  --board-border: 0;
+  --board-radius: 12px;
+  --box-gap: 1.6cqw;
+  --box-bg: transparent;
+  --cell-gap: 0.7cqw;
+  --cell-radius: 5px;
+  --cell-bg: #23262d;
+  --given-bg: #2c3038;
+
+  --given: #ffffff;
+  --given-weight: 600;
+  --user: #5ed3a4;
+  --cand: #9aa3b2;
+  --peer-bg: #2a3140;
+  --same-bg: #23262d;
+  --same-ring: inset 0 0 0 1.5px #5ed3a4;
+  --sel-bg: #3a4a66;
+  --sel-ring: inset 0 0 0 2px #7aa7ff;
+  --bad: #ff6b6b;
+  --bad-bg: #3a2226;
+}
+
+html[data-theme="light"] { color-scheme: light; }

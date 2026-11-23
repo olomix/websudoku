@@ -57,7 +57,8 @@ nodejs.org.
   (1 Easy, 2 Moderate, 3 Hard, 4 Evil), the next five digits are the
   1-based index in that level's file. Example: `300042` = Hard #42. Catalog
   files are append-only: an existing entry is never changed, removed or
-  reordered. A CI check compares the catalog against the last release.
+  reordered. The catalog test compares each file with its copy at the
+  latest `release-*` git tag, or at `main` if no tag exists yet.
 - **Rationale**: The ID alone tells the level (spec assumption), it is short
   enough to type and say, and 99,999 slots per level is far above the
   1,000-per-level target (FR-017).
@@ -67,15 +68,19 @@ nodejs.org.
 
 ## R5. Catalog file format and size
 
-- **Decision**: `web/puzzles/level-N.json` is an array of 81-character strings
-  (`0` = empty). Only givens ship; the browser computes the solution with a
-  fast backtracking solver when the puzzle loads (< 5 ms). The file for the
-  chosen level loads on demand.
-- **Rationale**: 1,000 puzzles × 84 bytes ≈ 84 KB per file before gzip,
-  ~35 KB after. Shipping solutions would double the size and make "check"
-  answers trivial to read in the network panel (not a security issue, just
-  noise).
-- **Alternatives considered**: One file for all levels (loads 4× more than
+- **Decision**: Each level is split into chunk files of 1,000
+  81-character strings (`web/puzzles/level-L-KKK.json`, `0` = empty), plus
+  `web/puzzles/index.json` with the count per level (contracts/catalog.md).
+  The catalog ships 10,000 puzzles per level. Only givens ship; the browser
+  computes the solution with a fast backtracking solver when the puzzle
+  loads (< 5 ms). The game loads the index and only the one chunk it needs.
+- **Rationale**: One chunk is 1,000 × 87 bytes ≈ 87 KB before gzip, about
+  33 KB after, whatever the catalog size. A single file per level would be
+  870 KB (about 330 KB gzip) at 10,000 puzzles, too slow for the 3 s first
+  puzzle (SC-001) on a slow phone link. Shipping solutions would double the
+  size and make "check" answers trivial to read in the network panel.
+- **Alternatives considered**: One file per level (fine at 1,000 puzzles,
+  10× too big at 10,000); one file for all levels (loads 4× more than
   needed); binary packing (smaller, but hard to review in diffs).
 
 ## R6. Address (URL) format
@@ -92,7 +97,9 @@ nodejs.org.
 ## R7. Input handling across Chrome and Safari
 
 - **Decision**: Keyboard input uses `KeyboardEvent.code` (`Digit1`–`Digit9`,
-  `Numpad1`–`Numpad9`) so that Shift+digit works on every layout.
+  `Numpad1`–`Numpad9`) so that Shift+digit works on every layout. When
+  `code` is not a digit key (synthetic keys from on-screen keyboards), the
+  digit is read from `key` instead.
   Shift+digit = add/remove candidate (FR-010 modifier). `N` and Space toggle
   candidate mode. On-screen keypad uses `<button>` elements, not `<input>`,
   so iOS Safari never opens the system keyboard or zooms. The board sets
@@ -109,7 +116,7 @@ nodejs.org.
   `performance.now()`. `visibilitychange` (hidden) and the Pause button stop
   the clock; the display refreshes with `requestAnimationFrame` at most
   once per second change. Elapsed time is saved to storage on every pause
-  and every 5 s.
+  and every 5 s in the focused tab.
 - **Rationale**: `setInterval` drifts and is throttled in background tabs,
   most of all in Safari. Summing `performance.now()` deltas meets SC-006
   (< 1 s error per hour).
@@ -169,8 +176,11 @@ nodejs.org.
 ## R13. Tooling and hosting
 
 - **Decision**: Node.js 26 LTS (26.13.1) for tools and tests only; the game
-  has no runtime dependencies. Local dev server: `npx serve` or
-  `python3 -m http.server`. Hosting: any static host (GitHub Pages fits the
-  repo location).
+  has no runtime dependencies. Local dev server: `tools/serve.js`, a small
+  Node static server with no dependencies, used by `npm start` and the
+  Playwright webServer (sends `no-store`, so tests never see stale files).
+  Hosting: any static host (GitHub Pages fits the repo location).
 - **Rationale**: Static files only; HTTPS from the host gives the secure
   context the clipboard needs.
+- **Alternatives considered**: `npx serve` (a download on every run) and
+  `python3 -m http.server` (an extra runtime for contributors).
