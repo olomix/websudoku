@@ -1,7 +1,8 @@
 // @ts-check
 /**
  * Puzzle IDs and catalog access (contracts/catalog.md).
- * id = level * 100000 + position, position is 1-based in level-<level>.json.
+ * id = level * 100000 + position; position is 1-based across the level's
+ * chunk files (index.json gives the count).
  */
 
 export const LEVELS = /** @type {const} */ ({

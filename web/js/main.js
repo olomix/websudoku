@@ -278,7 +278,10 @@ async function playerRequest(fn) {
     // A superseded request must not hold off adoption for the newer one.
     if (mine === request) {
       loading = false;
-      if (storage.isStale()) void adoptSaved();
+      // A request that started nothing (not found, load error) during
+      // start-up must not leave the board empty.
+      if (!game) void startFallback();
+      else if (storage.isStale()) void adoptSaved();
     }
   }
 }
@@ -318,6 +321,13 @@ function openById(input) {
       return;
     }
     if (p.id === game?.puzzleId) return;
+    const latest = storage.peekGame();
+    if (!game && latest?.puzzleId === p.id) {
+      // Start-up had not restored the save yet: restore it, not a blank board.
+      storage.markRead(latest.rev);
+      start(p, latest);
+      return;
+    }
     start(p);
   });
 }
@@ -369,7 +379,10 @@ async function adoptSaved() {
 }
 
 document.addEventListener("visibilitychange", () => {
-  if (!game) return;
+  if (!game) {
+    if (document.visibilityState === "visible" && storage.isStale()) void adoptSaved();
+    return;
+  }
   if (document.visibilityState === "hidden") {
     game.pause("hidden");
     storage.saveGame(game);
@@ -380,7 +393,7 @@ document.addEventListener("visibilitychange", () => {
   render();
 });
 window.addEventListener("focus", () => {
-  if (game && storage.isStale()) void adoptSaved();
+  if (storage.isStale()) void adoptSaved();
 });
 window.addEventListener("pagehide", () => game && storage.saveGame(game));
 window.addEventListener("storage", (e) => {
@@ -411,7 +424,7 @@ async function boot(mine) {
     else start(p, saved?.puzzleId === p.id ? saved : null);
   } else {
     await resumeOrRandom(saved, mine);
-    if (param !== null && game) {
+    if (param !== null && game && mine === request) {
       dialogs.showNotFound(param, () => void openRandom(game?.level ?? 1));
     }
   }
@@ -444,6 +457,17 @@ async function resumeOrRandom(saved, mine) {
   if (!game) throw new Error("no puzzle could load");
 }
 
+const START_ERROR = "The game could not start. Check the connection and reload the page.";
+
+/** Start-up again after a player request during start-up started nothing. */
+function startFallback() {
+  const mine = ++request;
+  return resumeOrRandom(storage.loadGame(), mine).catch((e) => {
+    console.error(e);
+    if (bootCurrent(mine)) say(START_ERROR);
+  });
+}
+
 // Started before boot, so the clock runs even after a failed start that
 // the player recovers from with a level button.
 requestAnimationFrame(tick);
@@ -451,7 +475,5 @@ requestAnimationFrame(tick);
 const bootTicket = ++request;
 boot(bootTicket).catch((e) => {
   console.error(e);
-  if (bootCurrent(bootTicket)) {
-    say("The game could not start. Check the connection and reload the page.");
-  }
+  if (bootCurrent(bootTicket)) say(START_ERROR);
 });

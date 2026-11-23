@@ -1,6 +1,6 @@
 // Catalog guarantees from contracts/catalog.md.
 import { execFileSync } from "node:child_process";
-import { readdirSync, statSync } from "node:fs";
+import { readFileSync, readdirSync, statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { grade } from "../../web/js/core/grader.js";
 import { countSolutions } from "../../web/js/core/solver.js";
@@ -55,7 +55,7 @@ function levelAt(ref, level) {
 }
 
 describe("file layout", () => {
-  it("serves every level from chunk files of at most 1,000 entries, under 100 KB each", async () => {
+  it("serves every level from full 1,000-entry chunk files (last one may be short), under 100 KB each", async () => {
     const index = await readIndex();
     expect(index.chunkSize).toBe(CHUNK_SIZE);
     const files = readdirSync(PUZZLES_DIR).filter((f) => f.endsWith(".json"));
@@ -65,7 +65,11 @@ describe("file layout", () => {
       expect(count).toBe(catalog[level].length);
       const chunks = Math.ceil(count / CHUNK_SIZE);
       for (let k = 1; k <= chunks; k++) {
-        expect(statSync(`${PUZZLES_DIR}${chunkName(level, k)}`).size).toBeLessThan(100 * 1024);
+        const file = `${PUZZLES_DIR}${chunkName(level, k)}`;
+        expect(statSync(file).size).toBeLessThan(100 * 1024);
+        // The browser maps position p to chunk ceil(p / size), entry (p-1) % size.
+        const want = k < chunks ? CHUNK_SIZE : count - (chunks - 1) * CHUNK_SIZE;
+        expect(JSON.parse(readFileSync(file, "utf8")), chunkName(level, k)).toHaveLength(want);
       }
       expect(files).not.toContain(chunkName(level, chunks + 1));
     }

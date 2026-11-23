@@ -117,3 +117,35 @@ test("a level picked while start-up still loads the saved game wins", async ({ p
   await expect(page.locator(".info .id")).toHaveText(/^#3\d{5}$/);
   await expect(page).toHaveURL(/\?id=3\d{5}$/);
 });
+
+test("Go with the saved puzzle's ID during start-up restores that game", async ({ page }) => {
+  await open(page, P.id);
+  const a = firstEmpty(P);
+  await type(page, a, 8);
+  await page.route("**/puzzles/level-1-*.json", async (r) => {
+    await new Promise((res) => setTimeout(res, 1000));
+    await r.continue();
+  });
+  await page.goto("/");
+  await page.getByLabel("Puzzle number").fill(String(P.id));
+  await page.getByRole("button", { name: "Go" }).click();
+  await expect(page.locator(".info .id")).toHaveText(`#${P.id}`);
+  await expect(cell(page, a)).toHaveText("8");
+});
+
+test("an unknown ID entered during start-up still lets the saved game load", async ({ page }) => {
+  await open(page, P.id);
+  const a = firstEmpty(P);
+  await type(page, a, 8);
+  await page.route("**/puzzles/level-1-*.json", async (r) => {
+    await new Promise((res) => setTimeout(res, 1000));
+    await r.continue();
+  });
+  await page.goto("/");
+  await page.getByLabel("Puzzle number").fill("123");
+  await page.getByRole("button", { name: "Go" }).click();
+  await expect(page.locator("dialog#not-found")).toBeVisible();
+  await page.locator("dialog#not-found").getByRole("button", { name: "Close" }).click();
+  await expect(page.locator(".info .id")).toHaveText(`#${P.id}`);
+  await expect(cell(page, a)).toHaveText("8");
+});

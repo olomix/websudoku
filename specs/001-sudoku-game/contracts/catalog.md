@@ -51,7 +51,7 @@ web/puzzles/
 5. **Append-only**: compared with the latest `release-*` git tag (or
    `main` if no tag exists), every existing
    entry is byte-identical at the same position. New entries go only to the
-   end of a file.
+   end of the level (its last chunk, then a new chunk).
 6. At least 1,000 entries per level (FR-017).
 7. Every chunk file is under 100 KB; full chunks never change once
    written, so appending touches only the last chunk and `index.json`.
