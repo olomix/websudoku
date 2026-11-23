@@ -101,7 +101,7 @@ run in order.
 
 - [ ] T012 [P] Document in `README.md`: the live address, that merges to `main` publish automatically after the checks, the manual start, the `release-*` tags and their role as catalog baseline, and that screenshot tests run on macOS only
 - [ ] T013 Run the local checks from quickstart.md ("Local checks before pushing") and fix any failure
-- [ ] T014 After the pull request is merged, run quickstart.md scenarios 1–6 and 8 on GitHub and record the results in the pull request; scenario 7 needs a deliberately broken pull request and is run on a throwaway branch that is deleted afterwards
+- [ ] T014 Simulate the `check` job locally as the runner does (`npm ci` in a clean clone with full history, then the job's commands with `CI=1`) and confirm the catalog baseline resolves; the on-GitHub scenarios are post-merge validation in quickstart.md, done by the maintainer
 
 ---
 
@@ -113,7 +113,7 @@ run in order.
 - **US2 (Phase 4)**: after US1 (it checks the `deploy` job)
 - **US3 (Phase 5)**: after US1
 - **US4 (Phase 6)**: after US1
-- **Polish (Phase 7)**: T012 any time; T013 after all workflow tasks; T014 after the merge and T002
+- **Polish (Phase 7)**: T012 any time; T013 and T014 after all workflow tasks
 
 ```text
 Setup → Foundational → US1 ─┬─ US2

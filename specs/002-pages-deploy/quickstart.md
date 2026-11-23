@@ -17,7 +17,10 @@ npm run typecheck && npm test && npm run test:catalog
 CI=1 npx playwright test          # screenshot tests run on macOS only
 ```
 
-## Validation scenarios
+## Validation scenarios (after the merge, by the maintainer)
+
+These need the workflow on GitHub; scenario 1 runs on the feature pull
+request itself, the others after it is merged.
 
 | # | Step | Expected | Spec |
 |---|------|----------|------|
