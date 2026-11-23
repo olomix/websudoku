@@ -172,8 +172,11 @@ nodejs.org.
 ## R13. Tooling and hosting
 
 - **Decision**: Node.js 26 LTS (26.13.1) for tools and tests only; the game
-  has no runtime dependencies. Local dev server: `npx serve` or
-  `python3 -m http.server`. Hosting: any static host (GitHub Pages fits the
-  repo location).
+  has no runtime dependencies. Local dev server: `tools/serve.js`, a small
+  Node static server with no dependencies, used by `npm start` and the
+  Playwright webServer (sends `no-store`, so tests never see stale files).
+  Hosting: any static host (GitHub Pages fits the repo location).
 - **Rationale**: Static files only; HTTPS from the host gives the secure
   context the clipboard needs.
+- **Alternatives considered**: `npx serve` (a download on every run) and
+  `python3 -m http.server` (an extra runtime for contributors).

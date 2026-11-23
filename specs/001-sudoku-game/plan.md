@@ -106,7 +106,9 @@ web/                      # Deployed as-is to the static host
     └── level-{1..4}.json
 
 tools/
-└── catalog.js            # Generate, grade, dedupe, append puzzles
+├── catalog.js            # CLI: generate, grade, dedupe, append puzzles
+├── generate.js           # Puzzle generator and canonical form (shared with tests)
+└── serve.js              # Dependency-free static server for npm start and e2e
 
 tests/
 ├── unit/                 # Vitest: core/*, storage
