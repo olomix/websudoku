@@ -88,3 +88,17 @@ test("an echo save of the same board keeps this tab's undo history", async ({ pa
   await page.getByRole("button", { name: "Undo" }).click();
   await expect(cell(page, a)).toHaveAttribute("data-value", "0");
 });
+
+test("a tab that cannot load another tab's newer game says so and recovers", async ({ page, context }) => {
+  await open(page, P.id);
+  await page.route("**/puzzles/level-3.json", (r) => r.abort());
+  const other = await context.newPage();
+  await open(other, 300001);
+  await expect(page.locator("#message")).toContainText("changed in another tab");
+  const a = firstEmpty(P);
+  await type(page, a, 8);
+  await expect(cell(page, a)).toHaveAttribute("data-value", "0");
+  await page.unroute("**/puzzles/level-3.json");
+  await type(page, a, 8);
+  await expect(page.locator(".info .id")).toHaveText("#300001");
+});

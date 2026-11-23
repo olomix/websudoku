@@ -33,7 +33,12 @@ absent. A failed write never stops the game.
   newer save holds the same board, the tab keeps its own game (undo history,
   Check marks, open dialogs) and only takes the longer elapsed time.
   Starting a new puzzle on purpose writes regardless, and a newer save that
-  arrives while such a request loads waits until the request ends.
+  arrives while the newest such request loads waits until it ends. The
+  automatic Easy puzzle on a first visit is not on purpose: it never
+  overwrites a newer save.
+- A tab that cannot load the newer save stays out of date: it ignores
+  edits, says so in the message line, and tries again on focus, when the
+  page becomes visible, and on the next edit.
 - The 5-second save runs only in the focused tab.
 - A restored game is not written back on load.
 - Restore is rejected (key deleted) if a given cell in `values` differs from

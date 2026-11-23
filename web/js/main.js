@@ -127,6 +127,11 @@ function move(dRow, dCol) {
  */
 function edit(fn) {
   if (game.status !== "playing") return;
+  if (storage.isStale()) {
+    // Another tab saved a newer game; load it instead of losing this move.
+    void adoptSaved();
+    return;
+  }
   const changed = fn();
   if (changed === false || changed === null) return;
   if (typeof changed === "number") wrong.delete(changed);
@@ -222,8 +227,10 @@ function copyLink() {
 /**
  * @param {{ id: number, level: 1|2|3|4, givens: string }} p
  * @param {any} [saved] a saved game to restore when it matches
+ * @param {{ auto?: boolean }} [opts] auto: not chosen by the player, so it
+ *   does not overwrite a newer save from another tab
  */
-function start(p, saved) {
+function start(p, saved, { auto = false } = {}) {
   const keep = saved && game?.puzzleId === p.id ? selected : null;
   const givens = parseGrid(p.givens);
   const solution = /** @type {number[]} */ (solve(givens));
@@ -237,7 +244,7 @@ function start(p, saved) {
   say(game.status === "solved" ? `Solved in ${formatTime(game.elapsedMs)}.` : "");
   setAddress(p.id);
   // Writing back a restored game would echo it to other tabs as a change.
-  if (!restored) storage.saveGame(game, { force: true });
+  if (!restored) storage.saveGame(game, { force: !auto });
   render();
 }
 
@@ -250,23 +257,28 @@ function setAddress(id) {
 
 /** Only the newest puzzle request may replace the board. */
 let request = 0;
-/** Player puzzle requests still loading; another tab's save waits for them. */
-let pending = 0;
+/** The newest player request is still loading; another tab's save waits. */
+let loading = false;
 const LOAD_ERROR = "The puzzle could not load. Check the connection and try again.";
+const STALE = "This game changed in another tab and could not load here. " +
+  "Your moves in this tab are not saved; reload the page.";
 
 /**
- * Run a player's puzzle request. When it ends without starting a game, a
- * newer save from another tab that arrived meanwhile is taken over.
+ * Run a player's puzzle request. When the newest one ends without starting
+ * a game, a newer save from another tab that arrived meanwhile is taken over.
  * @param {(mine: number) => Promise<void>} fn
  */
 async function playerRequest(fn) {
   const mine = ++request;
-  pending++;
+  loading = true;
   try {
     await fn(mine);
   } finally {
-    pending--;
-    if (!pending && storage.isStale()) void adoptSaved();
+    // A superseded request must not hold off adoption for the newer one.
+    if (mine === request) {
+      loading = false;
+      if (storage.isStale()) void adoptSaved();
+    }
   }
 }
 
@@ -328,7 +340,7 @@ function sameBoard(saved) {
  * failed or superseded take-over never lets the old board overwrite it.
  */
 async function adoptSaved() {
-  if (pending) return;
+  if (loading) return;
   const saved = storage.peekGame();
   if (!saved) return;
   if (sameBoard(saved)) {
@@ -339,7 +351,13 @@ async function adoptSaved() {
   }
   const at = request;
   const p = await getPuzzle(saved.puzzleId).catch(() => null);
-  if (!p || at !== request || pending) return;
+  if (at !== request || loading) return;
+  if (!p) {
+    // Stay stale so the old board cannot overwrite the newer save; tell the
+    // player, and retry on the next focus, visible page or edit.
+    if (storage.isStale()) say(STALE);
+    return;
+  }
   if (storage.peekGame()?.rev !== saved.rev) {
     void adoptSaved();
     return;
@@ -356,8 +374,12 @@ document.addEventListener("visibilitychange", () => {
     storage.saveGame(game);
   } else {
     game.resume("hidden");
+    if (storage.isStale()) void adoptSaved();
   }
   render();
+});
+window.addEventListener("focus", () => {
+  if (game && storage.isStale()) void adoptSaved();
 });
 window.addEventListener("pagehide", () => game && storage.saveGame(game));
 window.addEventListener("storage", (e) => {
@@ -387,12 +409,24 @@ async function boot() {
   }
 }
 
-/** @param {any} saved */
+/**
+ * Restore the saved game, else start a random Easy puzzle. The random start
+ * is automatic, not the player's choice, so it never overwrites a save
+ * another tab made while it loaded.
+ * @param {any} saved
+ */
 async function resumeOrRandom(saved) {
   const id = parseId(saved?.puzzleId);
   const p = id ? await getPuzzle(id.id) : null;
-  if (p) start(p, saved);
-  else await openRandom(1);
+  if (p) {
+    start(p, saved);
+    return;
+  }
+  const mine = ++request;
+  const fresh = await getPuzzle(await randomId(1));
+  if (mine !== request) return;
+  if (storage.isStale()) await adoptSaved();
+  if (!game && fresh) start(fresh, undefined, { auto: true });
   if (!game) throw new Error("no puzzle could load");
 }
 
