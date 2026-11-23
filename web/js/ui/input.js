@@ -32,8 +32,11 @@ export function bindKeyboard(act, enabled = () => true) {
     if (!enabled() || e.isComposing) return;
     const t = /** @type {HTMLElement} */ (e.target);
     if (t.closest?.("input, select, textarea, dialog")) return;
-    const onButton = Boolean(t.closest?.("button"));
+    const button = t.closest?.("button");
     const cmd = e.metaKey || e.ctrlKey;
+    // A held key repeats; only movement should, since digits, N, P and
+    // undo/redo act once per press.
+    if (e.repeat && !ARROWS[e.key]) return;
 
     if (cmd && !e.altKey && e.code === "KeyZ") {
       e.preventDefault();
@@ -48,19 +51,21 @@ export function bindKeyboard(act, enabled = () => true) {
     }
     // Leave other shortcuts (copy, reload, tab switch) to the browser.
     if (cmd || e.altKey) return;
-    // A held key repeats; only movement should, since digits, N and P toggle.
-    if (e.repeat && !ARROWS[e.key]) return;
 
     // Synthetic keys (on-screen keyboards, remote desktops) may lack a
     // physical code, so fall back to the character.
     const m = /^(?:Digit|Numpad)([1-9])$/.exec(e.code) ?? /^([1-9])$/.exec(e.key);
     if (m) {
       e.preventDefault();
+      button?.blur();
       act.digit(Number(m[1]), e.shiftKey);
       return;
     }
     if (ARROWS[e.key]) {
       e.preventDefault();
+      // Playing on the board ends a button's focus, so a later Space toggles
+      // notes instead of pressing that button again.
+      button?.blur();
       act.move(...ARROWS[e.key]);
       return;
     }
@@ -72,7 +77,7 @@ export function bindKeyboard(act, enabled = () => true) {
         return;
       case " ":
         // Space on a focused button activates that button instead.
-        if (onButton) return;
+        if (button) return;
         e.preventDefault();
         act.toggleMode();
         return;

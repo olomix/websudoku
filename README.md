@@ -31,9 +31,11 @@ and per OS. After an intended board change, refresh them with
 
 ## Puzzles
 
-Puzzles live in `web/puzzles/level-1.json` … `level-4.json`, one
-81-character string per entry (`0` = empty). A puzzle number is
-`level * 100000 + position`, so `300042` is Hard puzzle 42.
+Puzzles live in `web/puzzles/`: 10,000 per level, split into files of
+1,000 (`level-1-001.json` … `level-4-010.json`) plus `index.json` with the
+count per level. Each entry is one 81-character string (`0` = empty). A
+puzzle number is `level * 100000 + position`, so `300042` is Hard puzzle
+42. The game loads only the one file a puzzle is in (about 33 KB gzip).
 
 Add puzzles with:
 

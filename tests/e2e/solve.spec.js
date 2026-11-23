@@ -107,8 +107,13 @@ test("hidden page pauses; visible again resumes only that pause", async ({ page 
     document.dispatchEvent(new Event("visibilitychange"));
   }, state);
   await setVisibility("hidden");
+  await expect(page.locator("#board")).toBeHidden();
+  const frozen = await page.locator(".clock").textContent();
+  await page.waitForTimeout(1200);
+  await expect(page.locator(".clock")).toHaveText(frozen);
   await setVisibility("visible");
   await expect(page.locator("#board")).toBeVisible();
+  await expect(page.locator(".clock")).not.toHaveText(frozen, { timeout: 2500 });
   await page.getByRole("button", { name: "Pause" }).click();
   await setVisibility("hidden");
   await setVisibility("visible");
@@ -160,4 +165,27 @@ test("holding a digit key does not flip the cell back and forth", async ({ page 
   for (let k = 0; k < 4; k++) await page.keyboard.down("Digit7"); // later downs repeat
   await page.keyboard.up("Digit7");
   await expect(cell(page, i)).toHaveText("7");
+});
+
+test("Space after a level button and arrow-key play toggles notes, not the button", async ({ page }) => {
+  await open(page, P.id);
+  await page.locator(".levels button", { hasText: "Easy" }).focus();
+  await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Space");
+  await expect(page.locator(".keypad .mode")).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator(".info .id")).toHaveText(`#${P.id}`);
+});
+
+test("holding Ctrl/Cmd+Z undoes one step only", async ({ page }) => {
+  await open(page, P.id);
+  const a = firstEmpty(P, 0);
+  const b = firstEmpty(P, 1);
+  await type(page, a, 1);
+  await type(page, b, 2);
+  await page.keyboard.down("ControlOrMeta");
+  for (let k = 0; k < 3; k++) await page.keyboard.down("z"); // later downs repeat
+  await page.keyboard.up("z");
+  await page.keyboard.up("ControlOrMeta");
+  await expect(cell(page, b)).toHaveAttribute("data-value", "0");
+  await expect(cell(page, a)).toHaveText("1");
 });

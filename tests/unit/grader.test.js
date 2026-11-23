@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
+import { chunkName } from "../../web/js/core/catalog.js";
 import { indexOf, parseGrid } from "../../web/js/core/grid.js";
 import { grade } from "../../web/js/core/grader.js";
 import { solve } from "../../web/js/core/solver.js";
@@ -164,8 +165,8 @@ describe("grader", () => {
   it("never removes the true digit (soundness)", () => {
     // Catalog samples from Moderate to Evil exercise every technique, not
     // only the singles that EASY and HARD17 need.
-    const sample = [2, 3, 4].flatMap((l) => JSON.parse(
-      readFileSync(new URL(`../../web/puzzles/level-${l}.json`, import.meta.url), "utf8")).slice(0, 60));
+    const sample = [2, 3, 4].flatMap((l) => JSON.parse(readFileSync(
+      new URL(`../../web/puzzles/${chunkName(l, 1)}`, import.meta.url), "utf8")).slice(0, 60));
     const used = new Set();
     for (const p of [EASY, HARD17, ...sample]) {
       const sol = solve(parseGrid(p));

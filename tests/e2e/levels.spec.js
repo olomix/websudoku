@@ -64,7 +64,7 @@ test("copy falls back to a text field when the clipboard is blocked", async ({ p
 
 test("a level that cannot load keeps the board and says so", async ({ page }) => {
   await open(page, 100001);
-  await page.route("**/puzzles/level-4.json", (r) => r.abort());
+  await page.route("**/puzzles/level-4-*.json", (r) => r.abort());
   await page.locator(".levels button", { hasText: "Evil" }).click();
   await expect(page.locator("#message")).toContainText("could not load");
   await expect(page).toHaveURL(/\?id=100001$/);
@@ -72,7 +72,7 @@ test("a level that cannot load keeps the board and says so", async ({ page }) =>
 
 test("a slow older level choice does not replace a newer one", async ({ page }) => {
   await open(page, 100001);
-  await page.route("**/puzzles/level-3.json", async (r) => {
+  await page.route("**/puzzles/level-3-*.json", async (r) => {
     await new Promise((res) => setTimeout(res, 1500));
     await r.continue();
   });
@@ -84,10 +84,10 @@ test("a slow older level choice does not replace a newer one", async ({ page }) 
 });
 
 test("after a failed start, a level button recovers and the clock runs", async ({ page }) => {
-  await page.route("**/puzzles/level-1.json", (r) => r.abort());
+  await page.route("**/puzzles/level-1-*.json", (r) => r.abort());
   await page.goto("/");
   await expect(page.locator("#message")).toContainText("could not start");
-  await page.unroute("**/puzzles/level-1.json");
+  await page.unroute("**/puzzles/level-1-*.json");
   await page.locator(".levels button", { hasText: "Easy" }).click();
   await expect(page.locator(".info .id")).toHaveText(/^#1\d{5}$/);
   await expect(page.locator(".clock")).not.toHaveText("0:00", { timeout: 3000 });

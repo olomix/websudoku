@@ -68,15 +68,19 @@ nodejs.org.
 
 ## R5. Catalog file format and size
 
-- **Decision**: `web/puzzles/level-N.json` is an array of 81-character strings
-  (`0` = empty). Only givens ship; the browser computes the solution with a
-  fast backtracking solver when the puzzle loads (< 5 ms). The file for the
-  chosen level loads on demand.
-- **Rationale**: 1,000 puzzles × 84 bytes ≈ 84 KB per file before gzip,
-  ~35 KB after. Shipping solutions would double the size and make "check"
-  answers trivial to read in the network panel (not a security issue, just
-  noise).
-- **Alternatives considered**: One file for all levels (loads 4× more than
+- **Decision**: Each level is split into chunk files of 1,000
+  81-character strings (`web/puzzles/level-L-KKK.json`, `0` = empty), plus
+  `web/puzzles/index.json` with the count per level (contracts/catalog.md).
+  The catalog ships 10,000 puzzles per level. Only givens ship; the browser
+  computes the solution with a fast backtracking solver when the puzzle
+  loads (< 5 ms). The game loads the index and only the one chunk it needs.
+- **Rationale**: One chunk is 1,000 × 87 bytes ≈ 87 KB before gzip, about
+  33 KB after, whatever the catalog size. A single file per level would be
+  870 KB (about 330 KB gzip) at 10,000 puzzles, too slow for the 3 s first
+  puzzle (SC-001) on a slow phone link. Shipping solutions would double the
+  size and make "check" answers trivial to read in the network panel.
+- **Alternatives considered**: One file per level (fine at 1,000 puzzles,
+  10× too big at 10,000); one file for all levels (loads 4× more than
   needed); binary packing (smaller, but hard to review in diffs).
 
 ## R6. Address (URL) format

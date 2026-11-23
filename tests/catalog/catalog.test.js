@@ -1,9 +1,11 @@
 // Catalog guarantees from contracts/catalog.md.
 import { execFileSync } from "node:child_process";
+import { readdirSync, statSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { grade } from "../../web/js/core/grader.js";
 import { countSolutions } from "../../web/js/core/solver.js";
-import { readLevel } from "../../tools/catalog.js";
+import { chunkName } from "../../web/js/core/catalog.js";
+import { CHUNK_SIZE, PUZZLES_DIR, readIndex, readLevel } from "../../tools/catalog.js";
 import { GIVENS_RANGE, canonical } from "../../tools/generate.js";
 
 const LEVELS = [1, 2, 3, 4];
@@ -32,6 +34,43 @@ function baselineRef() {
   // A clone of a feature branch often has only the remote-tracking main.
   return resolves("main") || !resolves("origin/main") ? "main" : "origin/main";
 }
+
+/**
+ * A level as committed at `ref`, in either file format, or null.
+ * @returns {string[] | null}
+ */
+function levelAt(ref, level) {
+  const legacy = git("show", `${ref}:web/puzzles/level-${level}.json`);
+  if (legacy != null) return JSON.parse(legacy);
+  const index = git("show", `${ref}:web/puzzles/index.json`);
+  if (index == null) return null;
+  const { chunkSize, levels } = JSON.parse(index);
+  const count = levels[level] ?? 0;
+  if (!count) return null;
+  const list = [];
+  for (let k = 1; k <= Math.ceil(count / chunkSize); k++) {
+    list.push(...JSON.parse(git("show", `${ref}:web/puzzles/${chunkName(level, k)}`)));
+  }
+  return list.slice(0, count);
+}
+
+describe("file layout", () => {
+  it("serves every level from chunk files of at most 1,000 entries, under 100 KB each", async () => {
+    const index = await readIndex();
+    expect(index.chunkSize).toBe(CHUNK_SIZE);
+    const files = readdirSync(PUZZLES_DIR).filter((f) => f.endsWith(".json"));
+    expect(files.filter((f) => /^level-\d\.json$/.test(f)), "old single-file format").toEqual([]);
+    for (const level of LEVELS) {
+      const count = index.levels[level];
+      expect(count).toBe(catalog[level].length);
+      const chunks = Math.ceil(count / CHUNK_SIZE);
+      for (let k = 1; k <= chunks; k++) {
+        expect(statSync(`${PUZZLES_DIR}${chunkName(level, k)}`).size).toBeLessThan(100 * 1024);
+      }
+      expect(files).not.toContain(chunkName(level, chunks + 1));
+    }
+  });
+});
 
 describe.each(LEVELS)("level %i", (level) => {
   const list = catalog[level];
@@ -64,9 +103,8 @@ describe.each(LEVELS)("level %i", (level) => {
     expect(resolves(ref),
       `baseline ref ${ref} not found; run git fetch origin main:refs/remotes/origin/main --tags`)
       .toBe(true);
-    const old = git("show", `${ref}:web/puzzles/level-${level}.json`);
-    if (old == null) skip(`no level-${level}.json at ${ref}`);
-    const before = JSON.parse(/** @type {string} */ (old));
+    const before = levelAt(ref, level);
+    if (before == null) skip(`no level ${level} at ${ref}`);
     expect(list.slice(0, before.length)).toEqual(before);
   });
 });

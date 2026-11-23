@@ -62,10 +62,10 @@ test("a catalog that cannot load does not replace the saved game", async ({ page
   const p = puzzle(300001);
   const a = firstEmpty(p);
   await type(page, a, 8);
-  await page.route("**/puzzles/level-3.json", (r) => r.abort());
+  await page.route("**/puzzles/level-3-*.json", (r) => r.abort());
   await page.goto("/");
   await expect(page.locator("#message")).toContainText("could not");
-  await page.unroute("**/puzzles/level-3.json");
+  await page.unroute("**/puzzles/level-3-*.json");
   await page.goto("/");
   await expect(page.locator(".info .id")).toHaveText("#300001");
   await expect(cell(page, a)).toHaveText("8");
@@ -91,14 +91,29 @@ test("an echo save of the same board keeps this tab's undo history", async ({ pa
 
 test("a tab that cannot load another tab's newer game says so and recovers", async ({ page, context }) => {
   await open(page, P.id);
-  await page.route("**/puzzles/level-3.json", (r) => r.abort());
+  await page.route("**/puzzles/level-3-*.json", (r) => r.abort());
   const other = await context.newPage();
   await open(other, 300001);
   await expect(page.locator("#message")).toContainText("changed in another tab");
   const a = firstEmpty(P);
   await type(page, a, 8);
   await expect(cell(page, a)).toHaveAttribute("data-value", "0");
-  await page.unroute("**/puzzles/level-3.json");
+  await page.unroute("**/puzzles/level-3-*.json");
   await type(page, a, 8);
   await expect(page.locator(".info .id")).toHaveText("#300001");
+});
+
+test("a level picked while start-up still loads the saved game wins", async ({ page }) => {
+  await open(page, P.id);
+  await type(page, firstEmpty(P), 8);
+  await page.route("**/puzzles/level-1-*.json", async (r) => {
+    await new Promise((res) => setTimeout(res, 1500));
+    await r.continue();
+  });
+  await page.goto("/");
+  await page.locator(".levels button", { hasText: "Hard" }).click();
+  await expect(page.locator(".info .id")).toHaveText(/^#3\d{5}$/);
+  await page.waitForTimeout(2000);
+  await expect(page.locator(".info .id")).toHaveText(/^#3\d{5}$/);
+  await expect(page).toHaveURL(/\?id=3\d{5}$/);
 });

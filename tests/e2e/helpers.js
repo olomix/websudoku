@@ -1,13 +1,14 @@
 import { readFileSync } from "node:fs";
 import { expect } from "@playwright/test";
+import { chunkName } from "../../web/js/core/catalog.js";
 import { solve } from "../../web/js/core/solver.js";
 
-const files = {};
-/** Givens and solution of a catalog puzzle, read the same way the game does. */
+/** Givens and solution of a catalog puzzle (positions up to 1,000 only). */
 export function puzzle(id) {
   const level = Math.floor(id / 100000);
-  files[level] ??= JSON.parse(readFileSync(new URL(`../../web/puzzles/level-${level}.json`, import.meta.url), "utf8"));
-  const givens = [...files[level][(id % 100000) - 1]].map(Number);
+  const chunk = JSON.parse(readFileSync(
+    new URL(`../../web/puzzles/${chunkName(level, 1)}`, import.meta.url), "utf8"));
+  const givens = [...chunk[(id % 100000) - 1]].map(Number);
   return { id, level, givens, solution: solve(givens) };
 }
 

@@ -41,8 +41,10 @@ test("new puzzle opens another puzzle of the same level", async ({ page }) => {
   await open(page, P.id);
   await fill(page, P);
   await page.locator("#new-puzzle").click();
+  await expect(page).not.toHaveURL(/\?id=100001$/);
   await expect(page).toHaveURL(/\?id=1\d{5}$/);
   await expect(page.locator("dialog#completion")).toHaveCount(0);
+  await expect(page.locator(".cell.user")).toHaveCount(0);
 });
 
 test("after a blocked share, Back returns to the completion dialog", async ({ page }) => {

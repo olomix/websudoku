@@ -34,36 +34,53 @@ export function parseId(input) {
   return { id, level: /** @type {Level} */ (Math.floor(id / 100000)), position };
 }
 
-/** @type {Map<number, Promise<string[]>>} */
+/** @type {Map<string, Promise<any>>} */
 const cache = new Map();
 
 /**
- * Load one level file (once per page).
- * @param {Level} level
- * @param {string} [base] URL of the puzzles folder
+ * Fetch JSON once per page; a failed fetch is forgotten so it can be retried.
+ * @param {string} url
  */
-export function loadLevel(level, base = "puzzles/") {
-  let p = cache.get(level);
+function fetchJson(url) {
+  let p = cache.get(url);
   if (!p) {
-    p = fetch(`${base}level-${level}.json`).then((r) => {
-      if (!r.ok) throw new Error(`cannot load level ${level}: HTTP ${r.status}`);
+    p = fetch(url).then((r) => {
+      if (!r.ok) throw new Error(`cannot load ${url}: HTTP ${r.status}`);
       return r.json();
     });
-    p.catch(() => cache.delete(level));
-    cache.set(level, p);
+    p.catch(() => cache.delete(url));
+    cache.set(url, p);
   }
   return p;
 }
 
 /**
+ * Chunk file `k` (1-based) of a level (contracts/catalog.md).
+ * @param {number} level
+ * @param {number} k
+ */
+export const chunkName = (level, k) => `level-${level}-${String(k).padStart(3, "0")}.json`;
+
+/**
+ * @param {string} base
+ * @returns {Promise<{ chunkSize: number, levels: Record<string, number> }>}
+ */
+const loadIndex = (base) => fetchJson(`${base}index.json`);
+
+/**
  * @param {number} id
+ * @param {string} [base] URL of the puzzles folder
  * @returns {Promise<{ id: number, level: Level, givens: string } | null>}
  */
-export async function getPuzzle(id) {
+export async function getPuzzle(id, base = "puzzles/") {
   const parsed = parseId(id);
   if (!parsed) return null;
-  const list = await loadLevel(parsed.level);
-  const givens = list[parsed.position - 1];
+  const index = await loadIndex(base);
+  if (parsed.position > (index.levels[parsed.level] ?? 0)) return null;
+  const k = Math.ceil(parsed.position / index.chunkSize);
+  /** @type {string[]} */
+  const list = await fetchJson(`${base}${chunkName(parsed.level, k)}`);
+  const givens = list[(parsed.position - 1) % index.chunkSize];
   if (!givens) return null;
   return { id: parsed.id, level: parsed.level, givens };
 }
@@ -71,8 +88,10 @@ export async function getPuzzle(id) {
 /**
  * @param {Level} level
  * @param {() => number} [random]
+ * @param {string} [base]
  */
-export async function randomId(level, random = Math.random) {
-  const list = await loadLevel(level);
-  return formatId(level, 1 + Math.floor(random() * list.length));
+export async function randomId(level, random = Math.random, base = "puzzles/") {
+  const count = (await loadIndex(base)).levels[level] ?? 0;
+  if (count < 1) throw new Error(`level ${level} has no puzzles`);
+  return formatId(level, 1 + Math.floor(random() * count));
 }

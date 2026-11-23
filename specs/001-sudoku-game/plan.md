@@ -42,8 +42,8 @@ puzzle playable < 3 s on page open (SC-001); solution compute < 5 ms.
 **Constraints**: No server, no build step, no runtime dependencies; works at
 320 px width; timer error < 1 s per hour (SC-006).
 
-**Scale/Scope**: 1 screen; ≥ 1,000 puzzles per level (~35 KB gzip per level
-file).
+**Scale/Scope**: 1 screen; 10,000 puzzles per level (≥ 1,000 required),
+served as 1,000-puzzle chunks of about 33 KB gzip each.
 
 ## Constitution Check
 
@@ -103,7 +103,8 @@ web/                      # Deployed as-is to the static host
 │       ├── header.js     # Level, ID field, timer, actions
 │       └── dialogs.js    # Not found, completion, copy fallback
 └── puzzles/
-    └── level-{1..4}.json
+    ├── index.json        # Puzzle count per level
+    └── level-{1..4}-NNN.json  # 1,000-puzzle chunks
 
 tools/
 ├── catalog.js            # CLI: generate, grade, dedupe, append puzzles

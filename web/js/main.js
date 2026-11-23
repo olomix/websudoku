@@ -128,7 +128,8 @@ function move(dRow, dCol) {
 function edit(fn) {
   if (game.status !== "playing") return;
   if (storage.isStale()) {
-    // Another tab saved a newer game; load it instead of losing this move.
+    // Another tab saved a newer game: drop this move and load that game, so
+    // the old board cannot overwrite it (contracts/storage.md).
     void adoptSaved();
     return;
   }
@@ -392,39 +393,52 @@ setInterval(() => {
 }, 5000);
 
 /**
- * A catalog that cannot load throws; nothing new is started then, so the
- * saved game is never replaced because of a network error.
+ * Start-up holds the first request ticket. A player request (level button,
+ * Go) or another tab's save taken over while start-up loads wins: start-up
+ * then starts nothing. A catalog that cannot load throws; nothing new is
+ * started then, so the saved game is never replaced by a network error.
+ * @param {number} mine
  */
-async function boot() {
+async function boot(mine) {
   applyTheme();
   const saved = storage.loadGame();
   const param = new URL(location.href).searchParams.get("id");
   const parsed = param === null ? null : parseId(param);
   const p = parsed ? await getPuzzle(parsed.id) : null;
+  if (!bootCurrent(mine)) return;
   if (p) {
-    start(p, saved?.puzzleId === p.id ? saved : null);
+    if (saved?.puzzleId === p.id && storage.isStale()) await adoptSaved();
+    else start(p, saved?.puzzleId === p.id ? saved : null);
   } else {
-    await resumeOrRandom(saved);
-    if (param !== null) dialogs.showNotFound(param, () => void openRandom(game.level));
+    await resumeOrRandom(saved, mine);
+    if (param !== null && game) {
+      dialogs.showNotFound(param, () => void openRandom(game?.level ?? 1));
+    }
   }
 }
+
+/** @param {number} mine */
+const bootCurrent = (mine) => mine === request && !game;
 
 /**
  * Restore the saved game, else start a random Easy puzzle. The random start
  * is automatic, not the player's choice, so it never overwrites a save
  * another tab made while it loaded.
- * @param {any} saved
+ * @param {any} saved the save as read when start-up began
+ * @param {number} mine start-up's request ticket
  */
-async function resumeOrRandom(saved) {
+async function resumeOrRandom(saved, mine) {
   const id = parseId(saved?.puzzleId);
   const p = id ? await getPuzzle(id.id) : null;
+  if (!bootCurrent(mine)) return;
   if (p) {
-    start(p, saved);
+    // A newer save arrived while loading: use it, not the old snapshot.
+    if (storage.isStale()) await adoptSaved();
+    else start(p, saved);
     return;
   }
-  const mine = ++request;
   const fresh = await getPuzzle(await randomId(1));
-  if (mine !== request) return;
+  if (!bootCurrent(mine)) return;
   if (storage.isStale()) await adoptSaved();
   if (!game && fresh) start(fresh, undefined, { auto: true });
   if (!game) throw new Error("no puzzle could load");
@@ -433,7 +447,11 @@ async function resumeOrRandom(saved) {
 // Started before boot, so the clock runs even after a failed start that
 // the player recovers from with a level button.
 requestAnimationFrame(tick);
-boot().catch((e) => {
+// Taken before the first await, so any later request supersedes start-up.
+const bootTicket = ++request;
+boot(bootTicket).catch((e) => {
   console.error(e);
-  say("The game could not start. Check the connection and reload the page.");
+  if (bootCurrent(bootTicket)) {
+    say("The game could not start. Check the connection and reload the page.");
+  }
 });
