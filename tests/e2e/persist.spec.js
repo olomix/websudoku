@@ -34,3 +34,39 @@ test("another ID in the address replaces the saved game", async ({ page }) => {
   await open(page, P.id);
   await expect(page.locator(".cell.user")).toHaveCount(0);
 });
+
+test("a manual pause survives a reload", async ({ page }) => {
+  await open(page, P.id);
+  await page.getByRole("button", { name: "Pause" }).click();
+  await expect(page.locator("#board")).toBeHidden();
+  await page.reload();
+  await expect(page.locator(".info .id")).toHaveText(`#${P.id}`);
+  await expect(page.locator("#board")).toBeHidden();
+  await expect(page.locator("#paused-cover")).toBeVisible();
+});
+
+test("a newer save from another tab replaces this tab's older board", async ({ page, context }) => {
+  await open(page, P.id);
+  const other = await context.newPage();
+  await open(other, P.id);
+  const a = firstEmpty(P);
+  await type(other, a, 8);
+  await expect(cell(page, a)).toHaveText("8");
+  await other.close();
+  await page.reload();
+  await expect(cell(page, a)).toHaveText("8");
+});
+
+test("a catalog that cannot load does not replace the saved game", async ({ page }) => {
+  await open(page, 300001);
+  const p = puzzle(300001);
+  const a = firstEmpty(p);
+  await type(page, a, 8);
+  await page.route("**/puzzles/level-3.json", (r) => r.abort());
+  await page.goto("/");
+  await expect(page.locator("#message")).toContainText("could not");
+  await page.unroute("**/puzzles/level-3.json");
+  await page.goto("/");
+  await expect(page.locator(".info .id")).toHaveText("#300001");
+  await expect(cell(page, a)).toHaveText("8");
+});

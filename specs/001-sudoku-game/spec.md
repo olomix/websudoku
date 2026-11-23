@@ -149,7 +149,7 @@ A player closes or reloads the page and comes back to the same puzzle with the s
 - **FR-002**: The game MUST show given digits in a different style from player digits, and MUST NOT let the player change given digits.
 - **FR-003**: The player MUST be able to select a cell by click/tap and by arrow keys.
 - **FR-004**: The player MUST be able to enter digits 1–9 and clear a cell by keyboard and by an on-screen keypad.
-- **FR-005**: The game MUST highlight the selected cell, and lightly highlight its row, column and box.
+- **FR-005**: The game MUST highlight the selected cell, and lightly highlight its row, column and box. The selected cell MUST stay clearly marked (an outline, not only a background color) also when it shows a conflict or a Check mark.
 - **FR-006**: The game MUST highlight duplicate digits in the same row, column or box. The player MUST be able to turn this off.
 - **FR-007**: The game MUST provide undo and redo for all digit and candidate changes in the current game.
 

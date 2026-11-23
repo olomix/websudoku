@@ -191,6 +191,7 @@ export class Game {
       candidates: [...this.candidates],
       elapsedMs: this.elapsedMs,
       status: this.status,
+      pauseReason: this.pauseReason,
       assisted: this.assisted,
       savedAt: new Date().toISOString(),
     };
@@ -198,14 +199,15 @@ export class Game {
 
   /**
    * Rebuild a saved game. Returns null when the save does not match the
-   * puzzle. A restored unsolved game starts paused with reason "hidden",
-   * so the caller resumes it once the page is visible.
+   * puzzle. A restored unsolved game starts paused: with reason "user" when
+   * the player had paused it, else "hidden", so the caller resumes it once
+   * the page is visible.
    * @param {any} saved
    * @param {ConstructorParameters<typeof Game>[0]} puzzle
    */
   static restore(saved, puzzle) {
     if (!saved || saved.puzzleId !== puzzle.puzzleId) return null;
-    const { values, candidates, elapsedMs, status, assisted } = saved;
+    const { values, candidates, elapsedMs, status, pauseReason, assisted } = saved;
     const okArray = (/** @type {unknown} */ a, /** @type {number} */ max) =>
       Array.isArray(a) && a.length === CELLS &&
       a.every((x) => Number.isInteger(x) && x >= 0 && x <= max);
@@ -225,7 +227,9 @@ export class Game {
       game.status = "solved";
     } else {
       game.status = "paused";
-      game.pauseReason = "hidden";
+      // A saved "paused" also comes from a page that was hidden, so only an
+      // explicit user reason keeps the board covered after a reload.
+      game.pauseReason = status === "paused" && pauseReason === "user" ? "user" : "hidden";
     }
     return game;
   }

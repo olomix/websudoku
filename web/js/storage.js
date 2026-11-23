@@ -93,11 +93,40 @@ export function loadSettings() {
 /** @param {Settings} s */
 export const saveSettings = (s) => write(KEYS.settings, s);
 
-/** @returns {any} the saved game object, or null */
-export const loadGame = () => read(KEYS.game);
+/**
+ * Revision of the save this tab last read or wrote. Every save increments
+ * the stored `rev`; a tab whose revision is older than the stored one is
+ * stale and must not overwrite the newer game another tab saved.
+ */
+let ownRev = 0;
 
-/** @param {{ toJSON(): object }} game */
-export const saveGame = (game) => write(KEYS.game, game.toJSON());
+const storedRev = () => {
+  const rev = read(KEYS.game)?.rev;
+  return Number.isInteger(rev) ? rev : 0;
+};
+
+/** @returns {any} the saved game object, or null */
+export function loadGame() {
+  const saved = read(KEYS.game);
+  ownRev = Number.isInteger(saved?.rev) ? saved.rev : 0;
+  return saved;
+}
+
+/** True when another tab saved a newer game than this tab has. */
+export const isStale = () => storedRev() > ownRev;
+
+/**
+ * @param {{ toJSON(): object }} game
+ * @param {{ force?: boolean }} [opts] force: the player started this game
+ *   here on purpose, so it replaces whatever another tab saved
+ * @returns {boolean} false when skipped (stale tab) or the write failed
+ */
+export function saveGame(game, { force = false } = {}) {
+  const current = storedRev();
+  if (current > ownRev && !force) return false;
+  ownRev = current + 1;
+  return write(KEYS.game, { ...game.toJSON(), rev: ownRev });
+}
 
 /**
  * @param {number} puzzleId

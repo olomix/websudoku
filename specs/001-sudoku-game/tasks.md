@@ -50,7 +50,7 @@ offline tool in `tools/`, tests in `tests/`.
 
 - [X] T006 [P] Unit tests for grid helpers (index↔row/col/box, 20 peers per cell, conflict detection) in `tests/unit/grid.test.js`
 - [X] T007 [P] Unit tests for the solver (solves a known puzzle; `countSolutions(grid, 2)` returns 0, 1 or 2 correctly; < 5 ms on an Evil sample) in `tests/unit/solver.test.js`
-- [X] T008 [P] Unit tests for each technique in research R3 (one fixture per technique where only that technique makes progress) and for the grader ladder in `tests/unit/grader.test.js`
+- [X] T008 [P] Unit tests for each technique in research R3 (one crafted candidate state per technique that checks the removed and the kept candidates; simple coloring covers trap and wrap), a soundness test over catalog samples of levels 2–4, and grader ladder tests in `tests/unit/grader.test.js`
 - [X] T009 [P] Unit tests for ID parse/format per `contracts/catalog.md` "ID mapping" (valid IDs, separators and spaces stripped, `^[1-4][0-9]{5}$`, out-of-range position) in `tests/unit/catalog.test.js`
 - [X] T010 [P] Unit tests for the storage codec per `contracts/storage.md` (versioned read/write, bad JSON and unknown `v` delete the key, write failure does not throw) in `tests/unit/storage.test.js`
 

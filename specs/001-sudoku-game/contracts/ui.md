@@ -22,9 +22,14 @@ Key matching uses the physical key (`code`), so it works on any layout.
 | `N` or Space | Toggle the mode between value and candidate |
 | Backspace / Delete | Clear the cell (value and candidates) |
 | `0`, letters, other keys | Ignored (spec edge case) |
+| Auto-repeat of a held key | Ignored, except arrow keys |
 | Cmd/Ctrl + Z | Undo |
 | Cmd/Ctrl + Shift + Z, Ctrl + Y | Redo |
 | `P` | Pause / resume |
+
+A click or tap on a cell takes keyboard focus away from any focused field
+or button, so the next key goes to the board. A digit key without a
+physical key code (on-screen keyboards) is read from its character.
 
 Digit entry rules:
 
@@ -61,6 +66,19 @@ Shows: puzzle ID, level, time `m:ss` (or `h:mm:ss`), label `clean` /
 Sudoku #300042 (Hard) — solved in 7:42, clean
 https://<host>/?id=300042
 ```
+
+## Copy fallback
+
+When the clipboard is blocked, a dialog shows the text in a selectable
+field. Opened from the completion dialog, its button is "Back" and returns
+to the completion dialog.
+
+## Load errors
+
+If a level file cannot load, the current board stays and the message line
+says the puzzle could not load. "Puzzle not found" is only for IDs that do
+not exist. On start-up, a saved game whose level file cannot load is kept,
+not replaced by a new puzzle.
 
 ## Copy link (clipboard)
 

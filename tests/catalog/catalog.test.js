@@ -11,9 +11,12 @@ const catalog = Object.fromEntries(
   await Promise.all(LEVELS.map(async (l) => [l, await readLevel(l)])));
 const digits = (p) => [...p].map(Number);
 
+/** stdout, or null when git exits non-zero. */
 function git(...args) {
   try {
-    return execFileSync("git", args, { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] });
+    return execFileSync("git", args, {
+      encoding: "utf8", stdio: ["ignore", "pipe", "ignore"], maxBuffer: 64 * 1024 * 1024,
+    });
   } catch {
     return null;
   }
@@ -53,6 +56,9 @@ describe.each(LEVELS)("level %i", (level) => {
 
   it("is append-only against the release baseline (5)", ({ skip }) => {
     const ref = baselineRef();
+    // A missing baseline must fail: a silent skip would switch the guard off.
+    expect(git("rev-parse", "--verify", "--quiet", `${ref}^{commit}`),
+      `baseline ref ${ref} not found; fetch main and release-* tags`).not.toBeNull();
     const old = git("show", `${ref}:web/puzzles/level-${level}.json`);
     if (old == null) skip(`no level-${level}.json at ${ref}`);
     const before = JSON.parse(/** @type {string} */ (old));

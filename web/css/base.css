@@ -113,9 +113,11 @@ button, select, input { font: inherit; color: inherit; }
 .cell.given { color: var(--given); font-weight: var(--given-weight); background: var(--given-bg, var(--cell-bg)); }
 .cell.peer { background: var(--peer-bg); }
 .cell.same { background: var(--same-bg); box-shadow: var(--same-ring); }
-.cell.sel { background: var(--sel-bg); box-shadow: var(--sel-ring); }
 .cell.conflict { color: var(--bad); background: var(--bad-bg); }
 .cell.conflict.given { color: var(--given); }
+/* After .conflict: the active cell keeps its own background and ring, and a
+   conflicting digit stays red inside it. */
+.cell.sel { background: var(--sel-bg); box-shadow: var(--sel-ring); z-index: 1; }
 .cell.wrong::after {
   content: ""; position: absolute; inset: 12%; border-radius: 50%;
   border: 2px solid var(--bad); pointer-events: none;

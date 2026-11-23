@@ -43,7 +43,11 @@ export function createBoard(root, onSelect) {
   root.addEventListener("pointerdown", (e) => {
     const target = /** @type {HTMLElement} */ (e.target).closest(".cell");
     if (target instanceof HTMLElement && target.dataset.i) {
+      // preventDefault stops text selection but also keeps focus where it
+      // was, so a focused field or button would still get the next key.
       e.preventDefault();
+      const focused = document.activeElement;
+      if (focused instanceof HTMLElement && focused !== document.body) focused.blur();
       onSelect(Number(target.dataset.i));
     }
   });

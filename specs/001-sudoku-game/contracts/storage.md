@@ -14,15 +14,24 @@ absent. A failed write never stops the game.
   "candidates": [0,0,0,0, "... 81 bit masks ..."],
   "elapsedMs": 461230,
   "status": "playing",
+  "pauseReason": null,
   "assisted": false,
-  "savedAt": "2026-11-23T10:15:00Z"
+  "savedAt": "2026-11-23T10:15:00Z",
+  "rev": 17
 }
 ```
 
 - Written after every move, on pause, on page hide, and every 5 s while
   playing.
-- On load, `status: "playing"` is restored as `paused` until the page is
-  visible, so hidden time is never counted.
+- On load, an unsolved game is restored as `paused`. It resumes when the
+  page is visible, unless it was saved `paused` with `pauseReason: "user"`:
+  then it stays paused until the player resumes it (FR-024).
+- `rev` increases by one on every save. A tab remembers the `rev` it last
+  read or wrote. When the stored `rev` is newer (another tab saved), the tab
+  does not write; it loads the newer save instead (on the `storage` event).
+  Starting a new puzzle on purpose writes regardless.
+- The 5-second save runs only in the focused tab.
+- A restored game is not written back on load.
 - Restore is rejected (key deleted) if a given cell in `values` differs from
   the catalog givens.
 

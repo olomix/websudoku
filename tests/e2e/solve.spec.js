@@ -123,3 +123,41 @@ test("accepts a digit key without a physical key code (on-screen keyboards)", as
     new KeyboardEvent("keydown", { key: "3", code: "", bubbles: true })));
   await expect(cell(page, i)).toHaveText("3");
 });
+
+test("the selected cell keeps an outline when it shows a conflict", async ({ page }) => {
+  await open(page, P.id);
+  const i = firstEmpty(P);
+  const row = Math.floor(i / 9);
+  const g = [...Array(9).keys()].map((c) => row * 9 + c).find((k) => P.givens[k]);
+  await type(page, i, P.givens[g]);
+  await expect(cell(page, i)).toHaveClass(/\bconflict\b/);
+  await expect(cell(page, i)).toHaveClass(/\bsel\b/);
+  const ring = await cell(page, i).evaluate((e) => getComputedStyle(e).boxShadow);
+  expect(ring).not.toBe("none");
+});
+
+test("digits go to the board after a cell click, even if the Puzzle # field had focus", async ({ page }) => {
+  await open(page, P.id);
+  await page.getByLabel("Puzzle number").click();
+  const i = firstEmpty(P);
+  await type(page, i, 5);
+  await expect(cell(page, i)).toHaveText("5");
+  await expect(page.getByLabel("Puzzle number")).toHaveValue("");
+});
+
+test("Space after clicking a header button and a cell toggles notes, not the button", async ({ page }) => {
+  await open(page, P.id);
+  await page.getByRole("button", { name: "Check" }).click();
+  await cell(page, firstEmpty(P)).click();
+  await page.keyboard.press("Space");
+  await expect(page.locator(".keypad .mode")).toHaveAttribute("aria-pressed", "true");
+});
+
+test("holding a digit key does not flip the cell back and forth", async ({ page }) => {
+  await open(page, P.id);
+  const i = firstEmpty(P);
+  await cell(page, i).click();
+  for (let k = 0; k < 4; k++) await page.keyboard.down("Digit7"); // later downs repeat
+  await page.keyboard.up("Digit7");
+  await expect(cell(page, i)).toHaveText("7");
+});

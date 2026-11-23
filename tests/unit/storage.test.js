@@ -46,3 +46,30 @@ describe("storage", () => {
     expect(() => remove(KEYS.game)).not.toThrow();
   });
 });
+
+describe("save revisions across tabs", () => {
+  const game = (n) => ({ toJSON: () => ({ puzzleId: n }) });
+
+  it("a tab that has not seen a newer save does not overwrite it", async () => {
+    const mem = new Map();
+    globalThis.localStorage = {
+      getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+      setItem: (k, v) => mem.set(k, v),
+      removeItem: (k) => mem.delete(k),
+    };
+    // Each "tab" is a fresh module instance with its own revision.
+    const tabA = await import(`../../web/js/storage.js?tab=a`);
+    const tabB = await import(`../../web/js/storage.js?tab=b`);
+    tabA.loadGame();
+    tabB.loadGame();
+    expect(tabB.saveGame(game(2))).toBe(true);
+    expect(tabA.isStale()).toBe(true);
+    expect(tabA.saveGame(game(1))).toBe(false);
+    expect(tabA.loadGame().puzzleId).toBe(2);
+    expect(tabA.isStale()).toBe(false);
+    expect(tabA.saveGame(game(3))).toBe(true);
+    expect(tabB.saveGame(game(4))).toBe(false);
+    expect(tabB.saveGame(game(5), { force: true })).toBe(true);
+    expect(tabA.loadGame().puzzleId).toBe(5);
+  });
+});

@@ -48,6 +48,8 @@ export function bindKeyboard(act, enabled = () => true) {
     }
     // Leave other shortcuts (copy, reload, tab switch) to the browser.
     if (cmd || e.altKey) return;
+    // A held key repeats; only movement should, since digits, N and P toggle.
+    if (e.repeat && !ARROWS[e.key]) return;
 
     // Synthetic keys (on-screen keyboards, remote desktops) may lack a
     // physical code, so fall back to the character.

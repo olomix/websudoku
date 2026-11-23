@@ -129,8 +129,8 @@ function edit(fn) {
   if (game.status !== "playing") return;
   const changed = fn();
   if (changed === false || changed === null) return;
-  if (selected !== null) wrong.delete(selected);
   if (typeof changed === "number") wrong.delete(changed);
+  else if (selected !== null) wrong.delete(selected);
   storage.saveGame(game);
   if (message) say("");
   render();
@@ -162,11 +162,21 @@ function complete() {
   const result = buildResult(game);
   const { best, improved } = storage.recordBest(result);
   say(`Solved in ${formatTime(result.timeMs)}.`);
+  showCompletion(result, best, improved);
+}
+
+/**
+ * @param {import("./core/share.js").Result} result
+ * @param {{ timeMs: number } | null} best
+ * @param {boolean} improved
+ */
+function showCompletion(result, best, improved) {
   dialogs.showCompletion({
     result,
     best,
     improved,
-    onShare: () => void copy(shareText(result, puzzleLink(result.puzzleId)), "Result copied."),
+    onShare: () => void copy(shareText(result, puzzleLink(result.puzzleId)), "Result copied.",
+      () => showCompletion(result, best, improved)),
     onNew: () => void openRandom(game.level),
   });
 }
@@ -195,10 +205,14 @@ function check() {
   render();
 }
 
-/** @param {string} text @param {string} done */
-async function copy(text, done) {
+/**
+ * @param {string} text
+ * @param {string} done message after a successful copy
+ * @param {() => void} [back] reopens the dialog the fallback replaced
+ */
+async function copy(text, done, back) {
   if (await copyText(text)) say(done);
-  else dialogs.showCopyFallback(text);
+  else dialogs.showCopyFallback(text, back);
 }
 
 function copyLink() {
@@ -210,6 +224,7 @@ function copyLink() {
  * @param {any} [saved] a saved game to restore when it matches
  */
 function start(p, saved) {
+  const keep = saved && game?.puzzleId === p.id ? selected : null;
   const givens = parseGrid(p.givens);
   const solution = /** @type {number[]} */ (solve(givens));
   const puzzle = { puzzleId: p.id, level: p.level, givens, solution };
@@ -217,11 +232,12 @@ function start(p, saved) {
   game = restored ?? new Game(puzzle);
   if (restored && document.visibilityState === "visible") game.resume("hidden");
   if (!restored && document.visibilityState === "hidden") game.pause("hidden");
-  selected = null;
+  selected = keep;
   wrong = new Set();
   say(game.status === "solved" ? `Solved in ${formatTime(game.elapsedMs)}.` : "");
   setAddress(p.id);
-  storage.saveGame(game);
+  // Writing back a restored game would echo it to other tabs as a change.
+  if (!restored) storage.saveGame(game, { force: true });
   render();
 }
 
@@ -232,25 +248,57 @@ function setAddress(id) {
   window.history.replaceState(null, "", url);
 }
 
+/** Only the newest puzzle request may replace the board. */
+let request = 0;
+const LOAD_ERROR = "The puzzle could not load. Check the connection and try again.";
+
 /** @param {1|2|3|4} level */
 async function openRandom(level) {
-  const p = await getPuzzle(await randomId(level));
-  if (p) start(p);
+  const mine = ++request;
+  try {
+    const p = await getPuzzle(await randomId(level));
+    if (p && mine === request) start(p);
+  } catch (e) {
+    console.error(e);
+    if (mine === request) say(LOAD_ERROR);
+  }
 }
 
 /**
- * Open a puzzle the player asked for; keep the current game if it is unknown.
+ * Open a puzzle the player asked for; keep the current game if it is unknown
+ * or cannot load.
  * @param {string} input
  */
 async function openById(input) {
+  const mine = ++request;
   const parsed = parseId(input);
-  const p = parsed ? await getPuzzle(parsed.id).catch(() => null) : null;
+  let p = null;
+  try {
+    p = parsed ? await getPuzzle(parsed.id) : null;
+  } catch (e) {
+    console.error(e);
+    if (mine === request) say(LOAD_ERROR);
+    return;
+  }
+  if (mine !== request) return;
   if (!p) {
     dialogs.showNotFound(input, () => void openRandom(game?.level ?? 1));
     return;
   }
   if (p.id === game?.puzzleId) return;
   start(p);
+}
+
+/** Take over a newer save written by another tab (contracts/storage.md). */
+async function adoptSaved() {
+  const saved = storage.loadGame();
+  if (!saved) return;
+  const mine = ++request;
+  const p = await getPuzzle(saved.puzzleId).catch(() => null);
+  if (p && mine === request) {
+    dialogs.close();
+    start(p, saved);
+  }
 }
 
 document.addEventListener("visibilitychange", () => {
@@ -264,37 +312,44 @@ document.addEventListener("visibilitychange", () => {
   render();
 });
 window.addEventListener("pagehide", () => game && storage.saveGame(game));
+window.addEventListener("storage", (e) => {
+  if (e.key === storage.KEYS.game && e.newValue && storage.isStale()) void adoptSaved();
+});
+// Only the focused tab saves on a timer, so two open tabs do not keep
+// replacing each other's board.
 setInterval(() => {
-  if (game?.status === "playing") storage.saveGame(game);
+  if (game?.status === "playing" && document.hasFocus()) storage.saveGame(game);
 }, 5000);
 
+/**
+ * A catalog that cannot load throws; nothing new is started then, so the
+ * saved game is never replaced because of a network error.
+ */
 async function boot() {
   applyTheme();
   const saved = storage.loadGame();
   const param = new URL(location.href).searchParams.get("id");
-  if (param !== null) {
-    const parsed = parseId(param);
-    const p = parsed ? await getPuzzle(parsed.id).catch(() => null) : null;
-    if (p) {
-      start(p, saved?.puzzleId === p.id ? saved : null);
-    } else {
-      await resumeOrRandom(saved);
-      dialogs.showNotFound(param, () => void openRandom(game.level));
-    }
+  const parsed = param === null ? null : parseId(param);
+  const p = parsed ? await getPuzzle(parsed.id) : null;
+  if (p) {
+    start(p, saved?.puzzleId === p.id ? saved : null);
   } else {
     await resumeOrRandom(saved);
+    if (param !== null) dialogs.showNotFound(param, () => void openRandom(game.level));
   }
   requestAnimationFrame(tick);
 }
 
 /** @param {any} saved */
 async function resumeOrRandom(saved) {
-  const p = saved ? await getPuzzle(saved.puzzleId).catch(() => null) : null;
+  const id = parseId(saved?.puzzleId);
+  const p = id ? await getPuzzle(id.id) : null;
   if (p) start(p, saved);
   else await openRandom(1);
+  if (!game) throw new Error("no puzzle could load");
 }
 
 boot().catch((e) => {
   console.error(e);
-  say("The game could not start. Reload the page to try again.");
+  say("The game could not start. Check the connection and reload the page.");
 });

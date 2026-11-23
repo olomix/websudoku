@@ -57,3 +57,21 @@ describe("save and restore", () => {
     expect(Game.restore(g.toJSON(), puzzle())?.status).toBe("solved");
   });
 });
+
+describe("pause reason across reload", () => {
+  it("a user pause stays a user pause", () => {
+    const g = newGame();
+    g.pause("user");
+    const r = Game.restore(JSON.parse(JSON.stringify(g.toJSON())), puzzle());
+    expect(r?.pauseReason).toBe("user");
+    expect(r?.resume("hidden")).toBe(false);
+  });
+
+  it("a pause from a hidden page, or an old save without a reason, resumes when visible", () => {
+    const g = newGame();
+    g.pause("hidden");
+    expect(Game.restore(g.toJSON(), puzzle())?.pauseReason).toBe("hidden");
+    const { pauseReason: _drop, ...old } = { ...g.toJSON(), status: "paused" };
+    expect(Game.restore(old, puzzle())?.pauseReason).toBe("hidden");
+  });
+});

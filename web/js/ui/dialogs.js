@@ -32,7 +32,8 @@ function open(id, title, body, actions) {
     b.textContent = a.label;
     if (a.id) b.id = a.id;
     b.addEventListener("click", () => {
-      if (a.run?.() !== true) close();
+      // An action may open another dialog; close only this one.
+      if (a.run?.() !== true) d.close();
     });
     bar.appendChild(b);
   }
@@ -108,13 +109,14 @@ export function showNotFound(input, onRandom) {
 /**
  * Shown when the clipboard is not available: the player copies by hand.
  * @param {string} text
+ * @param {() => void} [back] reopens the dialog this one replaced
  */
-export function showCopyFallback(text) {
+export function showCopyFallback(text, back) {
   const ta = document.createElement("textarea");
   ta.readOnly = true;
   ta.value = text;
   const d = open("copy-fallback", "Copy this text", [p("Copying is blocked here. Select the text and copy it."), ta],
-    [{ label: "Close", primary: true }]);
+    [{ label: back ? "Back" : "Close", primary: true, run: back }]);
   ta.focus();
   ta.select();
   return d;

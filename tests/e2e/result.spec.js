@@ -44,3 +44,14 @@ test("new puzzle opens another puzzle of the same level", async ({ page }) => {
   await expect(page).toHaveURL(/\?id=1\d{5}$/);
   await expect(page.locator("dialog#completion")).toHaveCount(0);
 });
+
+test("after a blocked share, Back returns to the completion dialog", async ({ page }) => {
+  await stubClipboard(page, { fail: true });
+  await open(page, P.id);
+  await fill(page, P);
+  await page.locator("dialog#completion #share").click();
+  await expect(page.locator("dialog#copy-fallback textarea")).toHaveValue(/solved in/);
+  await page.locator("dialog#copy-fallback").getByRole("button", { name: "Back" }).click();
+  await expect(page.locator("dialog#completion")).toBeVisible();
+  await expect(page.locator("dialog#completion #new-puzzle")).toBeVisible();
+});

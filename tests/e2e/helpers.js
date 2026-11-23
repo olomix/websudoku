@@ -29,9 +29,10 @@ export async function stubClipboard(page, { fail = false } = {}) {
   }, fail);
 }
 
+/** Navigate and wait until a puzzle has started, not just until cells exist. */
 export async function open(page, id) {
   await page.goto(id ? `/?id=${id}` : "/");
-  await expect(page.locator(".cell")).toHaveCount(81);
+  await expect(page.locator(".info .id")).toHaveText(id ? `#${id}` : /^#\d{6}$/);
 }
 
 /** Type `digit` into cell `i` with the keyboard. */

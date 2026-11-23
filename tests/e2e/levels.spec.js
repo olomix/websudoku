@@ -61,3 +61,24 @@ test("copy falls back to a text field when the clipboard is blocked", async ({ p
   await page.getByRole("button", { name: "Copy link" }).click();
   await expect(page.locator("dialog#copy-fallback textarea")).toHaveValue(/\?id=200005$/);
 });
+
+test("a level that cannot load keeps the board and says so", async ({ page }) => {
+  await open(page, 100001);
+  await page.route("**/puzzles/level-4.json", (r) => r.abort());
+  await page.locator(".levels button", { hasText: "Evil" }).click();
+  await expect(page.locator("#message")).toContainText("could not load");
+  await expect(page).toHaveURL(/\?id=100001$/);
+});
+
+test("a slow older level choice does not replace a newer one", async ({ page }) => {
+  await open(page, 100001);
+  await page.route("**/puzzles/level-3.json", async (r) => {
+    await new Promise((res) => setTimeout(res, 1500));
+    await r.continue();
+  });
+  await page.locator(".levels button", { hasText: "Hard" }).click();
+  await page.locator(".levels button", { hasText: "Moderate" }).click();
+  await expect(page).toHaveURL(/\?id=2\d{5}$/);
+  await page.waitForTimeout(2000);
+  await expect(page).toHaveURL(/\?id=2\d{5}$/);
+});

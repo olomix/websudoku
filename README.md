@@ -48,8 +48,14 @@ or relabelled ones).
 
 **The catalog files are append-only.** Never change, remove or reorder an
 existing entry: shared links and recorded times point to puzzle numbers.
-The catalog test compares each file with the latest `release-*` git tag
-(or `main`) and fails when an existing entry changed.
+The catalog test compares each file with the latest `release-*` git tag,
+or with `main` when no tag exists, and fails when an existing entry
+differs from that baseline. It also fails when the baseline ref is missing
+(a shallow clone needs `git fetch origin main --tags`).
+
+Tag every release that ships puzzles (`git tag release-YYYY-MM-DD`). On
+`main` without a tag the baseline is the commit under test, so only
+uncommitted edits are caught.
 
 ## Design documents
 

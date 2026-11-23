@@ -29,7 +29,7 @@
   --same-bg: #c9dafb;
   --same-ring: none;
   --sel-bg: #a9c6fb;
-  --sel-ring: none;
+  --sel-ring: inset 0 0 0 2px #2f6fec;
   --bad: #e5484d;
   --bad-bg: #fde8e8;
 }
