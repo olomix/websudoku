@@ -459,10 +459,13 @@ async function resumeOrRandom(saved, mine) {
 
 const START_ERROR = "The game could not start. Check the connection and reload the page.";
 
-/** Start-up again after a player request during start-up started nothing. */
+/**
+ * Start-up again (address first, then the save) after a player request
+ * during start-up started nothing.
+ */
 function startFallback() {
   const mine = ++request;
-  return resumeOrRandom(storage.loadGame(), mine).catch((e) => {
+  return boot(mine).catch((e) => {
     console.error(e);
     if (bootCurrent(mine)) say(START_ERROR);
   });

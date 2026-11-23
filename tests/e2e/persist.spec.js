@@ -149,3 +149,18 @@ test("an unknown ID entered during start-up still lets the saved game load", asy
   await expect(page.locator(".info .id")).toHaveText(`#${P.id}`);
   await expect(cell(page, a)).toHaveText("8");
 });
+
+test("a failed Go during start-up still opens the puzzle in the address", async ({ page }) => {
+  await open(page, P.id);
+  await type(page, firstEmpty(P), 8);
+  await page.route("**/puzzles/level-3-*.json", async (r) => {
+    await new Promise((res) => setTimeout(res, 1000));
+    await r.continue();
+  });
+  await page.goto("/?id=300001");
+  await page.getByLabel("Puzzle number").fill("123");
+  await page.getByRole("button", { name: "Go" }).click();
+  await page.locator("dialog#not-found").getByRole("button", { name: "Close" }).click();
+  await expect(page.locator(".info .id")).toHaveText("#300001");
+  await expect(page).toHaveURL(/\?id=300001$/);
+});
