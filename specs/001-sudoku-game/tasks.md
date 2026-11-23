@@ -293,3 +293,10 @@ Developer C: US4, then US6
 - Every story is checked in both `chromium` and `webkit`
 - Never edit or reorder existing entries in `web/puzzles/*.json` (contracts/catalog.md, guarantee 5)
 - Commit after each task or logical group
+
+---
+
+## Phase 10: Convergence
+
+- [ ] T067 Manually compare the board side by side in real Chrome and real Safari on macOS in the dark theme (Theme: Dark), as T066 did for the light theme; a person does this step, because simulated input to the user's browsers is unsafe, per SC-009 (partial)
+- [ ] T068 Record `tools/serve.js` (dependency-free static server used by `npm start` and the Playwright webServer) and `tools/generate.js` (generator and canonical form shared by `tools/catalog.js` and the catalog test) in the plan's source tree in `specs/001-sudoku-game/plan.md` and in research R13 in `specs/001-sudoku-game/research.md`, per plan: Source Code structure (unrequested)
