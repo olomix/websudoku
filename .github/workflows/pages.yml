@@ -65,10 +65,14 @@ jobs:
       # would roll the site and the catalog baseline back.
       - name: Check that this commit is still the head of main
         id: head
+        # bash (not the default -e only) adds pipefail, so a failed
+        # ls-remote fails the job instead of looking like "not current".
+        shell: bash
         env:
           SHA: ${{ github.sha }}
         run: |
-          head=$(git ls-remote origin refs/heads/main | cut -f1)
+          head=$(git ls-remote --exit-code origin refs/heads/main | cut -f1)
+          [ -n "$head" ] || { echo "::error::cannot read the head of main"; exit 1; }
           if [ "$head" = "$SHA" ]; then
             echo "current=true" >> "$GITHUB_OUTPUT"
           else
@@ -104,9 +108,18 @@ jobs:
       # The newest release-* tag is the catalog's append-only baseline, so it
       # must name exactly what players now have.
       - name: Tag the published commit
+        shell: bash
         env:
           SHA: ${{ github.sha }}
         run: |
+          # A re-run of only this job reuses deploy's old output, so check
+          # again: a newer commit may have been published and tagged since.
+          head=$(git ls-remote --exit-code origin refs/heads/main | cut -f1)
+          [ -n "$head" ] || { echo "::error::cannot read the head of main"; exit 1; }
+          if [ "$head" != "$SHA" ]; then
+            echo "Not tagged: $SHA is no longer the head of main ($head)." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
           base="release-$(date -u +%Y-%m-%d)"
           name="$base"
           n=2

@@ -37,7 +37,8 @@ Needs `check`. Permissions `pages: write`, `id-token: write`. Environment
 1. Checkout (shallow).
 2. Head check: if `github.sha` is not the current head of `main`, set
    output `current=false`, write a note to the run summary and skip the
-   next steps (a re-run of an older run).
+   next steps (a re-run of an older run). If the head of `main` cannot be
+   read, the job fails.
 3. `actions/configure-pages`
 4. `actions/upload-pages-artifact` with `path: web` and the artifact name
    `github-pages-<run attempt>`
@@ -48,9 +49,12 @@ Needs `check`. Permissions `pages: write`, `id-token: write`. Environment
 Needs `deploy`; runs only when `deploy` reported `current=true`. Permission `contents: write`. Timeout 5 min.
 
 1. Checkout with tags.
-2. Pick the first free name of `release-YYYY-MM-DD`,
+2. Check again that `github.sha` is the head of `main` (a re-run of only
+   this job reuses `deploy`'s old output); if not, note it in the summary
+   and tag nothing. If the head of `main` cannot be read, fail.
+3. Pick the first free name of `release-YYYY-MM-DD`,
    `release-YYYY-MM-DD-2`, … (UTC date).
-3. Create an annotated tag on the deployed commit and push only that tag.
+4. Create an annotated tag on the deployed commit and push only that tag.
 
 ## Concurrency
 
