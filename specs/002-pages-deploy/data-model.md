@@ -8,7 +8,7 @@ This feature stores no application data. Its state is GitHub's own records.
 |-------|--------|-------|
 | `event` | `push`, `pull_request`, `workflow_dispatch` | `push` and `workflow_dispatch` only on `main` |
 | `jobs` | `check` → `deploy` → `release` | `deploy` needs `check` passed; `release` needs `deploy` passed; pull requests run `check` only |
-| `result` | `success`, `failure`, `cancelled` | A `failure` or `cancelled` run publishes nothing |
+| `result` | `success`, `failure`, `cancelled` | A failure in `check` or `deploy` publishes nothing; if only `release` fails, the version is live without a mark, and re-running `release` adds it. A run whose commit is no longer the head of `main` skips `deploy` and `release` |
 
 ## Published version
 

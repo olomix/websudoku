@@ -23,7 +23,9 @@ Runs on `ubuntu-latest`, Node 26, read-only token, timeout 15 min.
 5. `npm run test:catalog`
 6. `npx playwright install --with-deps chromium webkit`
 7. `npx playwright test`; screenshot tests skip off macOS.
-8. Upload the Playwright report as an artifact when the job fails.
+8. Upload the Playwright HTML report and traces as an artifact when the
+   job fails (CI uses the `list` and `html` reporters and keeps traces of
+   failed tests; a committed `test.only` fails the run).
 
 Any failing step fails the job; nothing later runs.
 
@@ -33,13 +35,17 @@ Needs `check`. Permissions `pages: write`, `id-token: write`. Environment
 `github-pages`, its URL is the published address. Timeout 10 min.
 
 1. Checkout (shallow).
-2. `actions/configure-pages`
-3. `actions/upload-pages-artifact` with `path: web`
-4. `actions/deploy-pages`
+2. Head check: if `github.sha` is not the current head of `main`, set
+   output `current=false`, write a note to the run summary and skip the
+   next steps (a re-run of an older run).
+3. `actions/configure-pages`
+4. `actions/upload-pages-artifact` with `path: web` and the artifact name
+   `github-pages-<run attempt>`
+5. `actions/deploy-pages` with that artifact name
 
 ## Job `release`
 
-Needs `deploy`. Permission `contents: write`. Timeout 5 min.
+Needs `deploy`; runs only when `deploy` reported `current=true`. Permission `contents: write`. Timeout 5 min.
 
 1. Checkout with tags.
 2. Pick the first free name of `release-YYYY-MM-DD`,

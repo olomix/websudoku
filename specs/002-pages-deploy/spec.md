@@ -103,7 +103,8 @@ check against it.
 
 - Two merges arrive close together: the later one wins; a publish never
   mixes files from two versions, and an older run never replaces a newer
-  live version.
+  live version. A re-run of an older run publishes nothing, because its
+  commit is no longer the head of `main`.
 - The publish step itself fails (service problem): the previous version
   stays live and the failure is visible; a rerun publishes normally.
 - The browser checks differ by operating system (for example screenshot
@@ -140,7 +141,8 @@ check against it.
   baseline.
 - **FR-010**: The pipeline MUST use only the permissions it needs: publish
   rights only in the publish step, and no stored personal secrets.
-- **FR-011**: A pipeline run MUST finish within 15 minutes, or fail.
+- **FR-011**: Each pipeline job MUST finish within its limit, or fail:
+  15 minutes for the checks, 10 for the publish, 5 for the release mark.
 
 ### Key Entities
 

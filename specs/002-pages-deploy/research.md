@@ -54,8 +54,10 @@ repos/<owner>/<repo>/releases/latest`.
 - **Decision**: Workflow-level `concurrency: group: pages-${{ github.ref }}`
   with `cancel-in-progress` true for pull requests and false for `main`.
 - **Rationale**: For `main`, GitHub runs one at a time and keeps only the
-  newest pending run, so an older run never deploys after a newer one has
-  started (FR-007), and a running deploy is never cut off halfway. For pull
+  newest pending run, and a running deploy is never cut off halfway. A
+  re-run of an older run keeps its old commit, which concurrency does not
+  stop; so `deploy` first checks that the commit is still the head of
+  `main` and otherwise skips publishing and tagging (FR-007). For pull
   requests, a new push makes the old check run useless, so it is cancelled.
 - **Alternatives considered**: A job-level group only on `deploy` (an older
   run could still pass `check` later and deploy after a newer one).
