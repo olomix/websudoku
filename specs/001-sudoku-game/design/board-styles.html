@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="color-scheme" content="light dark">
+<title>Sudoku board styles</title>
+<style>
+  :root {
+    --bg: #f5f5f7; --panel: #ffffff; --text: #1d1d1f; --muted: #6e6e73;
+    --line: #d2d2d7; --accent: #0a84ff; --accent-text: #ffffff;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1c1c1e; --panel: #2c2c2e; --text: #f5f5f7; --muted: #98989d;
+      --line: #3a3a3c;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; min-height: 100%; background: var(--bg); color: var(--text);
+    font: 14px/1.45 -apple-system, BlinkMacSystemFont, "SF Pro Text",
+      "Helvetica Neue", sans-serif;
+    -webkit-font-smoothing: antialiased; cursor: default;
+  }
+  main { padding: 44px 32px 20px; }
+  header h1 { margin: 0; font-size: 22px; font-weight: 650; }
+  header .sub { color: var(--muted); margin-top: 4px; }
+  .grid {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px;
+    margin-top: 18px;
+  }
+  .card {
+    background: var(--panel); border-radius: 12px; padding: 14px 16px 16px;
+    display: flex; flex-direction: column; align-items: center;
+    border: 2px solid transparent;
+  }
+  .card.active { border-color: var(--accent); }
+  .card h2 { margin: 0; font-size: 15px; font-weight: 650; align-self: stretch; }
+  .card .desc { color: var(--muted); font-size: 12px; align-self: stretch;
+    margin: 2px 0 12px; }
+  .card .pick { margin-top: 12px; }
+  .stage { padding: 14px; border-radius: 10px; }
+  button {
+    font: inherit; border: 1px solid var(--line); border-radius: 7px;
+    padding: 5px 14px; background: var(--panel); color: var(--text);
+  }
+  button.primary { background: var(--accent); border-color: var(--accent);
+    color: var(--accent-text); }
+  footer { display: flex; justify-content: space-between; margin-top: 14px;
+    color: var(--muted); font-size: 11.5px; }
+  kbd { font: inherit; background: var(--panel); border-radius: 4px;
+    padding: 1px 5px; color: var(--text); }
+
+  /* ---- board base ---- */
+  .board { display: grid; grid-template-columns: repeat(9, 46px);
+    grid-template-rows: repeat(9, 46px); user-select: none; }
+  .cell { position: relative; display: flex; align-items: center;
+    justify-content: center; font-size: 26px; }
+  .cands { position: absolute; inset: 1px; display: grid;
+    grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr);
+    font-size: 13.5px; line-height: 1; font-weight: 500; }
+  .cands span { display: flex; align-items: center; justify-content: center; }
+
+  /* A: Classic */
+  .s-classic .stage { background: #fff; }
+  .s-classic .board { border: 2px solid #000; font-family: Verdana, sans-serif; }
+  .s-classic .cell { border-right: 1px solid #999; border-bottom: 1px solid #999;
+    background: #fff; color: #000; }
+  .s-classic .cell.br { border-right: 2px solid #000; }
+  .s-classic .cell.bb { border-bottom: 2px solid #000; }
+  .s-classic .cell.c8 { border-right: 0; } .s-classic .cell.r8 { border-bottom: 0; }
+  .s-classic .cell.given { font-weight: bold; }
+  .s-classic .cell.user { color: #1a4fd6; }
+  .s-classic .cell.peer { background: #f0f0f0; }
+  .s-classic .cell.sel { background: #ffe680; }
+  .s-classic .cell.bad { color: #d00; }
+  .s-classic .cands { color: #777; }
+
+  /* B: Soft modern */
+  .s-soft .stage { background: #fff; }
+  .s-soft .board { border: 2px solid #3d4a5c; border-radius: 10px;
+    overflow: hidden; font-family: -apple-system, sans-serif; }
+  .s-soft .cell { border-right: 1px solid #dfe3ea; border-bottom: 1px solid #dfe3ea;
+    color: #2b3442; background: #fff; }
+  .s-soft .cell.br { border-right: 2px solid #3d4a5c; }
+  .s-soft .cell.bb { border-bottom: 2px solid #3d4a5c; }
+  .s-soft .cell.c8 { border-right: 0; } .s-soft .cell.r8 { border-bottom: 0; }
+  .s-soft .cell.given { font-weight: 600; }
+  .s-soft .cell.user { color: #2f6fec; font-weight: 500; }
+  .s-soft .cell.peer { background: #eef2f8; }
+  .s-soft .cell.same { background: #c9dafb; }
+  .s-soft .cell.sel { background: #a9c6fb; }
+  .s-soft .cell.bad { color: #e5484d; background: #fde8e8; }
+  .s-soft .cands { color: #8592a6; }
+
+  /* C: Paper */
+  .s-paper .stage { background: #f6f0e1; }
+  .s-paper .board { border: 2.5px solid #2c2416;
+    font-family: Georgia, "Times New Roman", serif; }
+  .s-paper .cell { border-right: 1px solid #b9ab8c; border-bottom: 1px solid #b9ab8c;
+    color: #2c2416; background: #fbf7ec; font-size: 21px; }
+  .s-paper .cell.br { border-right: 2.5px solid #2c2416; }
+  .s-paper .cell.bb { border-bottom: 2.5px solid #2c2416; }
+  .s-paper .cell.c8 { border-right: 0; } .s-paper .cell.r8 { border-bottom: 0; }
+  .s-paper .cell.user { color: #3b5b8c; font-style: italic;
+    font-family: "Bradley Hand", "Noteworthy", cursive; }
+  .s-paper .cell.peer { background: #f1e9d4; }
+  .s-paper .cell.sel { background: #e8d9ae; }
+  .s-paper .cell.bad { color: #a8321f; text-decoration: underline wavy; }
+  .s-paper .cands { color: #8a7c5f; font-family: "Bradley Hand", cursive;
+    font-size: 10px; }
+
+  /* D: Dark tiles */
+  .s-tiles .stage { background: #14161a; }
+  .s-tiles .board { display: grid; grid-template-columns: repeat(3, auto);
+    grid-template-rows: none; gap: 7px; font-family: -apple-system, sans-serif; }
+  .s-tiles .box { display: grid; grid-template-columns: repeat(3, 44px);
+    grid-template-rows: repeat(3, 44px); gap: 3px; }
+  .s-tiles .cell { background: #23262d; border-radius: 5px; color: #e9ecf1;
+    font-size: 25px; }
+  .s-tiles .cell.given { color: #ffffff; font-weight: 600; background: #2c3038; }
+  .s-tiles .cell.user { color: #5ed3a4; }
+  .s-tiles .cell.peer { background: #2a3140; }
+  .s-tiles .cell.same { box-shadow: inset 0 0 0 1.5px #5ed3a4; }
+  .s-tiles .cell.sel { background: #3a4a66; box-shadow: inset 0 0 0 2px #7aa7ff; }
+  .s-tiles .cell.bad { color: #ff6b6b; background: #3a2226; }
+  .s-tiles .cands { color: #9aa3b2; font-size: 13px; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Board styles</h1>
+    <div class="sub">Click a cell to try it. Type a digit to fill it, hold
+      <kbd>Shift</kbd> + digit for a candidate, <kbd>⌫</kbd> to clear,
+      arrows to move. Then pick the one you like.</div>
+  </header>
+  <div class="grid" id="grid"></div>
+  <footer>
+    <span>Same puzzle in both. Red = a conflict in row/column/box.</span>
+    <span><kbd>Esc</kbd> close without a choice</span>
+  </footer>
+</main>
+<script>
+const STYLES = [
+  ["soft", "B · Soft modern", "Rounded frame, light lines, blue tint on row/column/box and on equal digits."],
+  ["tiles", "D · Dark tiles", "Each cell a tile, boxes split by gaps instead of thick lines. Dark theme."],
+];
+const GIVENS = "530070000600195000098000060800060003400803001700020006060000280000419005000080079";
+// Player state: digits (one correct, one wrong -> conflict) and candidates.
+function initState() {
+  const v = [...GIVENS].map(Number), c = v.map(() => new Set());
+  v[2] = 4; v[3] = 6; v[10] = 9; v[41] = 0;
+  [[5, [2, 8]], [6, [1, 2, 4, 9]], [7, [1, 2]], [8, [2, 4, 8]],
+   [40, [2, 5, 9]], [36, [4]], [30, [1, 2, 4, 6, 7, 8, 9, 3, 5]]]
+    .forEach(([i, ds]) => ds.forEach(d => c[i].add(d)));
+  return { v, c, sel: 40 };
+}
+const rc = i => [Math.floor(i / 9), i % 9];
+const boxOf = i => { const [r, k] = rc(i); return Math.floor(r / 3) * 3 + Math.floor(k / 3); };
+const peers = (a, b) => { const [r1, c1] = rc(a), [r2, c2] = rc(b);
+  return r1 === r2 || c1 === c2 || boxOf(a) === boxOf(b); };
+
+let active = null;
+const boards = {};
+
+function render(key) {
+  const { el, st } = boards[key];
+  const cells = el.querySelectorAll(".cell");
+  cells.forEach(cell => {
+    const i = +cell.dataset.i, d = st.v[i];
+    const cls = ["cell"];
+    const [r, k] = rc(i);
+    if (k % 3 === 2 && k < 8) cls.push("br"); if (r % 3 === 2 && r < 8) cls.push("bb");
+    if (k === 8) cls.push("c8"); if (r === 8) cls.push("r8");
+    cls.push(GIVENS[i] !== "0" ? "given" : d ? "user" : "empty");
+    if (i === st.sel) cls.push("sel");
+    else if (st.sel != null && peers(i, st.sel)) cls.push("peer");
+    if (d && st.sel != null && i !== st.sel && st.v[st.sel] === d) cls.push("same");
+    if (d && GIVENS[i] === "0" &&
+        st.v.some((x, j) => j !== i && x === d && peers(i, j))) cls.push("bad");
+    cell.className = cls.join(" ");
+    if (d) cell.textContent = d;
+    else {
+      cell.innerHTML = '<div class="cands">' + [1,2,3,4,5,6,7,8,9]
+        .map(n => `<span>${st.c[i].has(n) ? n : ""}</span>`).join("") + "</div>";
+    }
+  });
+}
+
+function build() {
+  const grid = document.getElementById("grid");
+  STYLES.forEach(([key, name, desc]) => {
+    const card = document.createElement("section");
+    card.className = `card s-${key}`;
+    card.innerHTML = `<h2>${name}</h2><div class="desc">${desc}</div>
+      <div class="stage"><div class="board"></div></div>
+      <button class="pick primary">Choose ${name.split(" ")[0]}</button>`;
+    const board = card.querySelector(".board");
+    const mk = i => { const d = document.createElement("div"); d.className = "cell"; d.dataset.i = i;
+      d.addEventListener("mousedown", () => { boards[key].st.sel = i; setActive(key); render(key); });
+      return d; };
+    if (key === "tiles") {
+      for (let b = 0; b < 9; b++) {
+        const box = document.createElement("div"); box.className = "box";
+        for (let j = 0; j < 9; j++) {
+          const r = Math.floor(b / 3) * 3 + Math.floor(j / 3), k = (b % 3) * 3 + j % 3;
+          box.appendChild(mk(r * 9 + k));
+        }
+        board.appendChild(box);
+      }
+    } else for (let i = 0; i < 81; i++) board.appendChild(mk(i));
+    card.querySelector(".pick").addEventListener("click", () =>
+      htmlPopup.answer({ style: key, name }));
+    grid.appendChild(card);
+    boards[key] = { el: card, st: initState() };
+    render(key);
+  });
+}
+function setActive(key) {
+  active = key;
+  Object.entries(boards).forEach(([k, b]) => b.el.classList.toggle("active", k === key));
+}
+
+document.addEventListener("keydown", e => {
+  if (!active) return;
+  const st = boards[active].st; if (st.sel == null) return;
+  const i = st.sel, m = /^(Digit|Numpad)([1-9])$/.exec(e.code);
+  const moves = { ArrowUp: -9, ArrowDown: 9, ArrowLeft: -1, ArrowRight: 1 };
+  if (moves[e.key] !== undefined) {
+    const n = i + moves[e.key];
+    if (n >= 0 && n < 81 && !(Math.abs(moves[e.key]) === 1 && rc(n)[0] !== rc(i)[0])) st.sel = n;
+  } else if (GIVENS[i] !== "0") return;
+  else if (m) {
+    const d = +m[2];
+    if (e.shiftKey || e.altKey) { if (!st.v[i]) st.c[i].has(d) ? st.c[i].delete(d) : st.c[i].add(d); }
+    else { st.v[i] = st.v[i] === d ? 0 : d; st.c[i].clear(); }
+  } else if (e.key === "Backspace" || e.key === "Delete") { st.v[i] = 0; st.c[i].clear(); }
+  else return;
+  e.preventDefault(); render(active);
+});
+build(); setActive("soft");
+</script>
+</body>
+</html>
