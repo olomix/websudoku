@@ -22,7 +22,7 @@ absent. A failed write never stops the game.
 ```
 
 - Written after every move, on pause, on page hide, and every 5 s while
-  playing.
+  playing in the focused tab.
 - On load, an unsolved game is restored as `paused`. It resumes when the
   page is visible, unless it was saved `paused` with `pauseReason: "user"`:
   then it stays paused until the player resumes it (FR-024).

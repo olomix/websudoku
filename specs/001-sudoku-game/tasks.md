@@ -198,7 +198,7 @@ offline tool in `tools/`, tests in `tests/`.
 ### Implementation for User Story 6
 
 - [X] T056 [US6] Add game serialize/restore to `web/js/storage.js` for key `ws:v1:game` (data-model.md `GameState.puzzleId`, `GameState.values`, `GameState.candidates`, `GameState.elapsedMs`, `GameState.status`, `GameState.assisted`; `history`/`future` not saved)
-- [X] T057 [US6] Save after each move, on pause, on `pagehide`/`visibilitychange`, and every 5 s while playing; restore on start-up when no other `?id=` is given, in `web/js/main.js`
+- [X] T057 [US6] Save after each move, on pause, on `pagehide`/`visibilitychange`, and every 5 s while playing in the focused tab; restore on start-up when no other `?id=` is given, in `web/js/main.js`
 
 **Checkpoint**: All user stories work independently.
 
@@ -230,6 +230,7 @@ offline tool in `tools/`, tests in `tests/`.
 - **US2, US3, US4, US6**: depend on US1 (they extend `game.js`, `board.js`, `input.js`, `header.js`, `main.js`)
 - **US5**: depends on US1; uses the clipboard helper from US3 (T043)
 - **Polish (Phase 9)**: after the stories it touches; T058 can start right after T027
+- **Convergence (Phase 10)**: after Phase 9; T067 is a manual check by a person
 
 ### Story completion order
 

@@ -93,7 +93,9 @@ nodejs.org.
 ## R7. Input handling across Chrome and Safari
 
 - **Decision**: Keyboard input uses `KeyboardEvent.code` (`Digit1`–`Digit9`,
-  `Numpad1`–`Numpad9`) so that Shift+digit works on every layout.
+  `Numpad1`–`Numpad9`) so that Shift+digit works on every layout. When
+  `code` is not a digit key (synthetic keys from on-screen keyboards), the
+  digit is read from `key` instead.
   Shift+digit = add/remove candidate (FR-010 modifier). `N` and Space toggle
   candidate mode. On-screen keypad uses `<button>` elements, not `<input>`,
   so iOS Safari never opens the system keyboard or zooms. The board sets
@@ -110,7 +112,7 @@ nodejs.org.
   `performance.now()`. `visibilitychange` (hidden) and the Pause button stop
   the clock; the display refreshes with `requestAnimationFrame` at most
   once per second change. Elapsed time is saved to storage on every pause
-  and every 5 s.
+  and every 5 s in the focused tab.
 - **Rationale**: `setInterval` drifts and is throttled in background tabs,
   most of all in Safari. Summing `performance.now()` deltas meets SC-006
   (< 1 s error per hour).
