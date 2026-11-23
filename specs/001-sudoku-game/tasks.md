@@ -63,7 +63,7 @@ offline tool in `tools/`, tests in `tests/`.
 - [ ] T015 [P] Implement ID parse/format and level-file lookup (lazy `fetch` of `puzzles/level-N.json`, cache per level, random ID per level) in `web/js/core/catalog.js` (data-model.md `Puzzle.id`, `Puzzle.level`, `Puzzle.givens`)
 - [ ] T016 [P] Implement the safe versioned storage codec (`read(key)`, `write(key, value)`, `remove(key)`) in `web/js/storage.js` per `contracts/storage.md`
 - [ ] T017 Implement the catalog tool in `tools/catalog.js`: generate a full grid, remove givens while `countSolutions == 1`, grade, keep only puzzles whose grade and givens count match the requested level (research R3), reject duplicates incl. rotations/reflections/digit relabelling, and append to `web/puzzles/level-N.json`; CLI `--level N --count K`
-- [ ] T018 Catalog tests in `tests/catalog/catalog.test.js` for all six guarantees in `contracts/catalog.md` (append-only check compares against the `main` branch copy of each file via `git show`, skipped when the file is new)
+- [ ] T018 Catalog tests in `tests/catalog/catalog.test.js` for all six guarantees in `contracts/catalog.md` (append-only check compares each file with its copy at the latest `release-*` git tag, or at `main` if no tag exists, via `git show`; skipped when the baseline has no such file)
 - [ ] T019 Run `npm run catalog` for levels 1–4 until each `web/puzzles/level-N.json` has ≥ 1,000 entries (FR-017), then run `npm run test:catalog`; record the run time per level in the commit message
 
 **Checkpoint**: `npm test` and `npm run test:catalog` pass; four catalog files exist.
@@ -79,12 +79,12 @@ offline tool in `tools/`, tests in `tests/`.
 ### Tests for User Story 1
 
 - [ ] T020 [P] [US1] Unit tests for game state: givens immutable, set/clear value, undo/redo one move per action, conflict list, `solved` transition, input ignored after `solved` in `tests/unit/game.test.js`
-- [ ] T021 [P] [US1] Unit tests for the timer: sums active intervals, pause/resume, hidden time not counted, `m:ss` and `h:mm:ss` format in `tests/unit/timer.test.js`
+- [ ] T021 [P] [US1] Unit tests for the timer and pause rules: sums active intervals, pause/resume, hidden time not counted, page visible does not resume a `user` pause, `m:ss` and `h:mm:ss` format in `tests/unit/timer.test.js`
 - [ ] T022 [P] [US1] E2E test of spec US1 scenarios 1–5 plus undo/redo and conflict highlight in `tests/e2e/solve.spec.js`
 
 ### Implementation for User Story 1
 
-- [ ] T023 [US1] Implement game state in `web/js/core/game.js`: fields data-model.md `GameState.puzzleId`, `GameState.values`, `GameState.elapsedMs`, `GameState.status`, `GameState.history`, `GameState.future` with `Move` records; invariants and transitions from data-model.md "Game state"; methods `setValue`, `clear`, `undo`, `redo`, `conflicts`, `isSolved`
+- [ ] T023 [US1] Implement game state in `web/js/core/game.js`: fields data-model.md `GameState.puzzleId`, `GameState.values`, `GameState.elapsedMs`, `GameState.status`, `GameState.pauseReason`, `GameState.history`, `GameState.future` with `Move` records; invariants and transitions from data-model.md "Game state"; methods `setValue`, `clear`, `undo`, `redo`, `conflicts`, `isSolved`
 - [ ] T024 [P] [US1] Implement the active-time timer with `performance.now()` per research R8 in `web/js/core/timer.js`
 - [ ] T025 [P] [US1] Implement base layout CSS (header, board area, keypad below the board under 600 px, no horizontal scroll at 320 px, `touch-action: manipulation` on board and keypad) in `web/css/base.css`
 - [ ] T026 [P] [US1] Implement the light board theme (style B from `design/board-styles.html`: rounded frame, light cell lines, dark box borders on box groups, row/column/box tint, same-digit tint, red conflict tint, given vs player digit colors; cells scale with the viewport, min 34 px) in `web/css/theme-light.css`
@@ -93,7 +93,7 @@ offline tool in `tools/`, tests in `tests/`.
 - [ ] T029 [P] [US1] Implement the on-screen keypad (buttons 1–9, Clear, Undo, Redo; `<button>` elements only per research R7) in `web/js/ui/keypad.js`
 - [ ] T030 [US1] Implement the header with level label, puzzle ID, timer display and Pause button (grid hidden while paused, FR-024) in `web/js/ui/header.js`
 - [ ] T031 [US1] Implement the completion dialog (ID, level, time) and the "grid full but wrong" notice in `web/js/ui/dialogs.js`
-- [ ] T032 [US1] Wire start-up in `web/js/main.js`: load a random Easy puzzle, compute the solution, set `?id=` with `history.replaceState`, start the timer, pause on `visibilitychange` hidden
+- [ ] T032 [US1] Wire start-up in `web/js/main.js`: load a random Easy puzzle, compute the solution, set `?id=` with `history.replaceState`, start the timer, pause on `visibilitychange` hidden with `pauseReason` `hidden` and resume on visible only for that reason (data-model.md `GameState.pauseReason`)
 
 **Checkpoint**: The game is playable end to end in Chrome and Safari (value entry only).
 
@@ -152,7 +152,7 @@ offline tool in `tools/`, tests in `tests/`.
 ### Tests for User Story 4
 
 - [ ] T045 [P] [US4] Unit tests for `check()` (wrong cells listed, empty cells never revealed, `assisted` only goes false→true) in `tests/unit/check.test.js`
-- [ ] T046 [P] [US4] E2E test of spec US4 scenarios 1–3 in `tests/e2e/check.spec.js`
+- [ ] T046 [P] [US4] E2E test of spec US4 scenarios 1–2, and that the page has no "show solution" control (FR-026), in `tests/e2e/check.spec.js`
 
 ### Implementation for User Story 4
 
@@ -172,7 +172,7 @@ offline tool in `tools/`, tests in `tests/`.
 ### Tests for User Story 5
 
 - [ ] T049 [P] [US5] Unit tests for result building, share text format per `contracts/ui.md` "Share text", and personal best update rules in `tests/unit/share.test.js`
-- [ ] T050 [P] [US5] E2E test of spec US5 scenarios 1–3 (clipboard read with granted permission in `chromium`; text check via fallback dialog in `webkit`) in `tests/e2e/result.spec.js`
+- [ ] T050 [P] [US5] E2E test of spec US5 scenarios 1–3 and US4 scenario 3 (assisted label after a check with mistakes) (clipboard read with granted permission in `chromium`; text check via fallback dialog in `webkit`) in `tests/e2e/result.spec.js`
 
 ### Implementation for User Story 5
 
@@ -211,11 +211,12 @@ offline tool in `tools/`, tests in `tests/`.
 - [ ] T058 [P] Implement the dark board theme (style D from `design/board-styles.html`: tiles, gaps between box groups, green player digits, same-digit outline, candidate size per FR-009) in `web/css/theme-dark.css`, active under `prefers-color-scheme: dark` or `html[data-theme=dark]`
 - [ ] T059 Add settings (data-model.md `Settings.theme`, `Settings.highlightConflicts`, `Settings.inputMode`) stored under `ws:v1:settings` in `web/js/storage.js`, and the theme switch (Auto/Light/Dark) and conflict-highlight switch to `web/js/ui/header.js`
 - [ ] T060 [P] E2E test for themes and settings (`emulateMedia` light/dark, manual override persists, conflict switch hides highlights) in `tests/e2e/themes.spec.js`
-- [ ] T061 [P] Board screenshot tests for both themes in `chromium` and `webkit` (SC-009) in `tests/e2e/visual.spec.js`
+- [ ] T061 [P] Board screenshot tests for both themes, with a separate baseline per engine (`chromium`, `webkit`), in `tests/e2e/visual.spec.js`; cross-engine parity for SC-009 is checked side by side in T066
 - [ ] T062 [P] E2E layout test at 320 px width on `mobile-safari` and `mobile-chrome`: no horizontal scroll, keypad below the board, no zoom on tap (FR-031) in `tests/e2e/mobile.spec.js`
 - [ ] T063 Add `// @ts-check` and JSDoc types to all modules in `web/js/` and fix reported issues
 - [ ] T064 [P] Write `README.md` (what the game is, how to run, how to add puzzles, the append-only rule for `web/puzzles/`)
-- [ ] T065 Run the full quickstart.md manual table in real Chrome and real Safari on macOS, and fix any difference found
+- [ ] T065 [P] E2E performance check for SC-001 (board interactive < 3 s after navigation) and SC-005 (cell shows a typed digit < 100 ms) in `chromium` and `webkit` in `tests/e2e/perf.spec.js`
+- [ ] T066 Run the full quickstart.md manual table in real Chrome and real Safari on macOS, compare the board side by side in both themes (SC-009), and fix any difference found
 
 ---
 

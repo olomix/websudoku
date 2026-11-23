@@ -38,9 +38,10 @@ Each file is a JSON array of strings. Each string is 81 characters,
 1. Every entry has exactly one solution.
 2. Every entry's grade equals its file's level.
 3. Givens count is inside the level's range.
-4. No duplicate grids across all files (also not after rotation or
-   relabelling of digits).
-5. **Append-only**: compared with the previous release, every existing
+4. No duplicate grids across all files (also not after rotation,
+   reflection or relabelling of digits).
+5. **Append-only**: compared with the latest `release-*` git tag (or
+   `main` if no tag exists), every existing
    entry is byte-identical at the same position. New entries go only to the
    end of a file.
 6. At least 1,000 entries per level (FR-017).

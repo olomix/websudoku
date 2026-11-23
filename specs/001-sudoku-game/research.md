@@ -57,7 +57,8 @@ nodejs.org.
   (1 Easy, 2 Moderate, 3 Hard, 4 Evil), the next five digits are the
   1-based index in that level's file. Example: `300042` = Hard #42. Catalog
   files are append-only: an existing entry is never changed, removed or
-  reordered. A CI check compares the catalog against the last release.
+  reordered. The catalog test compares each file with its copy at the
+  latest `release-*` git tag, or at `main` if no tag exists yet.
 - **Rationale**: The ID alone tells the level (spec assumption), it is short
   enough to type and say, and 99,999 slots per level is far above the
   1,000-per-level target (FR-017).

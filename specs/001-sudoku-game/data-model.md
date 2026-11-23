@@ -38,6 +38,7 @@ Validation (offline tool and catalog test):
 | `candidates` | int[81] | Bit mask, bit `d-1` set = candidate `d`; 0 for cells with a value |
 | `elapsedMs` | integer ≥ 0 | Active time only |
 | `status` | enum | `playing`, `paused`, `solved` |
+| `pauseReason` | enum or null | `user` (Pause button) or `hidden` (page hidden); null unless `paused`; not saved, a restored game gets `hidden` |
 | `assisted` | boolean | True once a check found at least one mistake |
 | `history` | Move[] | Undo stack; not saved (FR-030) |
 | `future` | Move[] | Redo stack; cleared by any new move |
@@ -66,6 +67,7 @@ is still one move.
    └──────── paused
 ```
 
+- Page visible again resumes only when `pauseReason` is `hidden`; a `user` pause waits for the Pause button (FR-024).
 - `solved` is final for this game. The timer stops; input is ignored; undo
   is disabled.
 - Loading another puzzle replaces the game state (spec story 6, scenario 2).

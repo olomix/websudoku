@@ -38,7 +38,7 @@ A player opens the game, gets a puzzle of the default level, fills the empty cel
 
 **Acceptance Scenarios**:
 
-1. **Given** the page is opened with no puzzle in the address, **When** it loads, **Then** a random Easy puzzle is shown with its level and ID, and the timer starts.
+1. **Given** the page is opened with no puzzle in the address and no saved game exists, **When** it loads, **Then** a random Easy puzzle is shown with its level and ID, and the timer starts.
 2. **Given** a puzzle is shown, **When** the player selects an empty cell and enters a digit 1–9, **Then** the digit appears in that cell in the "player digit" style.
 3. **Given** a given (pre-filled) cell, **When** the player tries to change it, **Then** nothing changes.
 4. **Given** all cells are filled correctly, **When** the last digit is entered, **Then** the timer stops and a message shows "solved" with the solve time and the puzzle ID.
@@ -131,7 +131,7 @@ A player closes or reloads the page and comes back to the same puzzle with the s
 
 ### Edge Cases
 
-- The player enters a digit that conflicts with a digit in the same row, column or box. The game accepts it and does not block it. A conflict highlight is shown only if the player turns it on (default: on, simple duplicate highlight).
+- The player enters a digit that conflicts with a digit in the same row, column or box. The game accepts it and does not block it. A conflict highlight is shown by default; the player can turn it off (FR-006).
 - The player enters 0, a letter or other characters. They are ignored.
 - The page is hidden (other tab, phone locked). The timer pauses and starts again when the page is visible. A paused game is still valid for its own time.
 - The player opens a link with a malformed ID. The game shows "puzzle not found" and offers a random puzzle.
@@ -177,12 +177,12 @@ A player closes or reloads the page and comes back to the same puzzle with the s
 **Timer, check and completion**
 
 - **FR-023**: The game MUST show a timer that starts when the puzzle is shown and stops when it is solved.
-- **FR-024**: The timer MUST pause when the page is hidden and when the player uses "pause". While paused, the grid MUST be hidden.
+- **FR-024**: The timer MUST pause when the page is hidden and when the player uses "pause". When the page is visible again, the timer resumes only if the pause came from hiding the page. While paused, the grid MUST be hidden.
 - **FR-025**: The player MUST be able to check the grid. The check MUST mark each wrong player digit and MUST NOT show correct digits for empty cells.
 - **FR-026**: The game MUST NOT offer a "show solution" action.
 - **FR-027**: When all cells hold correct final digits, the game MUST stop the timer and show a success message with puzzle ID, level, solve time and the label "clean" (no mistakes found by check) or "assisted".
 - **FR-028**: The player MUST be able to copy a short result text (puzzle link, ID, level, time, label) for sharing.
-- **FR-029**: The game MUST store the player's best time per puzzle ID on the device and show it on completion.
+- **FR-029**: The game MUST store the player's best clean time per puzzle ID on the device and show it on completion.
 - **FR-030**: The game MUST save the current game (puzzle, digits, candidates, elapsed time, undo history not required) on the device and restore it after reload.
 
 **General**
@@ -198,7 +198,7 @@ A player closes or reloads the page and comes back to the same puzzle with the s
 
 - **Puzzle**: one catalog entry. Attributes: ID, level, the 81 cells of givens, the solution.
 - **Level**: one of Easy, Moderate, Hard, Evil. Each puzzle belongs to exactly one level.
-- **Game state**: the player's work on one puzzle. Attributes: puzzle ID, final digit per cell, candidate set per cell, elapsed time, paused flag, "check found mistakes" flag, undo/redo history.
+- **Game state**: the player's work on one puzzle. Attributes: puzzle ID, final digit per cell, candidate set per cell, elapsed time, status (playing, paused or solved), "check found mistakes" flag, undo/redo history.
 - **Result**: a finished solve. Attributes: puzzle ID, level, solve time, clean/assisted label, date.
 - **Personal best**: the lowest clean solve time per puzzle ID on this device.
 
@@ -214,7 +214,7 @@ A player closes or reloads the page and comes back to the same puzzle with the s
 - **SC-006**: The timer error is under 1 second for a 60-minute game, with pauses removed correctly.
 - **SC-007**: After a reload, 100% of digits, candidates and elapsed time are restored.
 - **SC-008**: In a test with 5 players, at least 4 complete an Easy puzzle and copy a shareable result without help.
-- **SC-009**: All acceptance scenarios pass in both Chrome and Safari, with no visible difference in the board between the two browsers.
+- **SC-009**: All acceptance scenarios pass in both Chrome and Safari, with no visible difference in the board between the two browsers when compared side by side (small font-rendering differences between engines are allowed).
 
 ## Assumptions
 
