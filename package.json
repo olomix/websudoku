@@ -1,0 +1,22 @@
+{
+  "name": "websudoku",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=26"
+  },
+  "scripts": {
+    "start": "node tools/serve.js web 8080",
+    "test": "vitest run tests/unit",
+    "test:catalog": "vitest run tests/catalog",
+    "test:e2e": "playwright test",
+    "catalog": "node tools/catalog.js",
+    "typecheck": "tsc -p jsconfig.json"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.65.1",
+    "typescript": "7.0.2",
+    "vitest": "5.1.1"
+  }
+}

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<title>Sudoku</title>
+<link rel="stylesheet" href="css/base.css">
+<link rel="stylesheet" href="css/theme-light.css">
+<link rel="stylesheet" href="css/theme-dark.css">
+</head>
+<body>
+<div class="app">
+  <header class="topbar" id="header"></header>
+  <main class="play">
+    <div class="board-wrap">
+      <div class="board" id="board" role="grid" aria-label="Sudoku board"></div>
+      <div class="paused-cover" id="paused-cover" hidden>
+        <p>Paused</p>
+        <button type="button" id="resume">Resume</button>
+      </div>
+    </div>
+    <div class="keypad" id="keypad"></div>
+  </main>
+  <p class="message" id="message" role="status" aria-live="polite"></p>
+</div>
+<div id="dialogs"></div>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
