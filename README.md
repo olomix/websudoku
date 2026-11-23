@@ -8,6 +8,8 @@ The game is plain HTML, CSS and JavaScript modules in `web/`. It has no
 build step, no server code and no runtime dependencies; any static host
 serves it.
 
+Play it at **https://alek.ws/websudoku/**.
+
 ## Run
 
 ```sh
@@ -63,3 +65,18 @@ uncommitted edits are caught.
 ## Design documents
 
 See `specs/001-sudoku-game/` for the spec, plan, data model and contracts.
+
+## Publishing
+
+`.github/workflows/pages.yml` publishes the game to GitHub Pages:
+
+- Every push to `main` (a merged pull request) runs the type check, the
+  unit and catalog tests and the Playwright tests; only when all pass, it
+  publishes the `web/` folder and nothing else.
+- Pull requests run the same checks and never publish.
+- Actions → Pages → "Run workflow" publishes `main` again by hand.
+- After each publish the workflow tags the commit `release-YYYY-MM-DD`
+  (`-2`, `-3`, … for more on one day). The newest tag is the catalog's
+  append-only baseline, so a published puzzle number can never change.
+- The screenshot tests run only on macOS (their baselines are macOS
+  images); CI runs on Linux and skips them.

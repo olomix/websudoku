@@ -54,6 +54,6 @@ run is kept.
 
 ## Published site
 
-- URL: `https://olomix.github.io/websudoku/`
+- URL: `https://alek.ws/websudoku/`
 - Contents: exactly `web/` (index.html, css/, js/, puzzles/).
-- Shared links: `https://olomix.github.io/websudoku/?id=<id>`.
+- Shared links: `https://alek.ws/websudoku/?id=<id>`.

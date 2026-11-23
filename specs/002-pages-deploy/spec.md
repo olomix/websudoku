@@ -27,7 +27,7 @@ open the public address: the change is there.
 1. **Given** a change is merged into `main` and all checks pass, **When**
    the pipeline finishes, **Then** the public site serves that version.
 2. **Given** the site is published, **When** a player opens
-   `https://olomix.github.io/websudoku/?id=300042`, **Then** Hard puzzle
+   `https://alek.ws/websudoku/?id=300042`, **Then** Hard puzzle
    300042 opens, exactly as in local play.
 3. **Given** the maintainer wants to publish again without a new change,
    **When** they start the pipeline by hand, **Then** the current `main` is
@@ -127,7 +127,7 @@ check against it.
   folder) and nothing else from the repository: no tests, tools, specs or
   development files.
 - **FR-005**: The published site MUST be served over HTTPS at
-  `https://olomix.github.io/websudoku/`, so the clipboard features work.
+  `https://alek.ws/websudoku/`, so the clipboard features work.
 - **FR-006**: Pull requests into `main` MUST run the same checks and show
   the result, and MUST NOT publish.
 - **FR-007**: Only one publish MAY run at a time; a newer run MUST win over
@@ -173,7 +173,10 @@ check against it.
 - GitHub Pages is switched to "GitHub Actions" as its source; the
   maintainer may need to do this once in the repository settings if the
   pipeline cannot do it.
-- No custom domain in this version.
+- The site uses the account's existing custom domain `alek.ws` (set in the
+  `olomix/olomix.github.io` repository), so the game lives at
+  `https://alek.ws/websudoku/`; HTTPS is enforced for that domain and this
+  site (maintainer decision, 2026-11-23).
 - The screenshot comparison tests stay macOS-only; the pipeline runs on a
   Linux runner and skips them (see Edge Cases). The other browser tests
   run there.

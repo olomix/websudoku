@@ -28,8 +28,8 @@ run in order.
 
 **Purpose**: Repository setting and folder
 
-- [ ] T001 Create the folder `.github/workflows/`
-- [ ] T002 Enable GitHub Pages with source "GitHub Actions" for `olomix/websudoku` once, with the maintainer's approval: `gh api -X POST repos/olomix/websudoku/pages -f build_type=workflow`; confirm `gh api repos/olomix/websudoku/pages --jq .build_type` prints `workflow` (research R8)
+- [X] T001 Create the folder `.github/workflows/`
+- [X] T002 Enable GitHub Pages with source "GitHub Actions" for `olomix/websudoku` once, with the maintainer's approval: `gh api -X POST repos/olomix/websudoku/pages -f build_type=workflow`; confirm `gh api repos/olomix/websudoku/pages --jq .build_type` prints `workflow` (research R8)
 
 ---
 
@@ -39,10 +39,10 @@ run in order.
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T003 [P] Skip the screenshot tests when `process.platform !== "darwin"` (baselines are macOS-only) in `tests/e2e/visual.spec.js` (research R5)
-- [ ] T004 Create `.github/workflows/pages.yml` with name, triggers `push` (main), `pull_request` (main) and `workflow_dispatch` per data-model.md `Pipeline run.event`, workflow default `permissions: contents: read`, and concurrency `group: pages-${{ github.ref }}` with `cancel-in-progress: ${{ github.event_name == 'pull_request' }}` per contracts/pipeline.md "Concurrency" (research R3, R4)
-- [ ] T005 Add the `check` job to `.github/workflows/pages.yml` per contracts/pipeline.md "Job `check`": `ubuntu-latest`, `timeout-minutes: 15`, `actions/checkout@v7.0.1` with `fetch-depth: 0`, `actions/setup-node@v7.1.0` with Node 26 and npm cache, `npm ci`, `npm run typecheck`, `npm test`, `npm run test:catalog`, `npx playwright install --with-deps chromium webkit`, `npx playwright test`, and upload of `playwright-report/` on failure (research R5, R6, R9)
-- [ ] T006 Run `actionlint .github/workflows/pages.yml` and fix every finding
+- [X] T003 [P] Skip the screenshot tests when `process.platform !== "darwin"` (baselines are macOS-only) in `tests/e2e/visual.spec.js` (research R5)
+- [X] T004 Create `.github/workflows/pages.yml` with name, triggers `push` (main), `pull_request` (main) and `workflow_dispatch` per data-model.md `Pipeline run.event`, workflow default `permissions: contents: read`, and concurrency `group: pages-${{ github.ref }}` with `cancel-in-progress: ${{ github.event_name == 'pull_request' }}` per contracts/pipeline.md "Concurrency" (research R3, R4)
+- [X] T005 Add the `check` job to `.github/workflows/pages.yml` per contracts/pipeline.md "Job `check`": `ubuntu-latest`, `timeout-minutes: 15`, `actions/checkout@v7.0.1` with `fetch-depth: 0`, `actions/setup-node@v7.1.0` with Node 26 and npm cache, `npm ci`, `npm run typecheck`, `npm test`, `npm run test:catalog`, `npx playwright install --with-deps chromium webkit`, `npx playwright test`, and upload of `playwright-report/` on failure (research R5, R6, R9)
+- [X] T006 Run `actionlint .github/workflows/pages.yml` and fix every finding
 
 **Checkpoint**: The workflow lints clean and its checks pass locally (`CI=1 npx playwright test` plus the npm scripts).
 
@@ -50,11 +50,11 @@ run in order.
 
 ## Phase 3: User Story 1 - Merged changes go live automatically (Priority: P1) 🎯 MVP
 
-**Goal**: A push to `main` or a manual start publishes `web/` to `https://olomix.github.io/websudoku/`.
+**Goal**: A push to `main` or a manual start publishes `web/` to `https://alek.ws/websudoku/`.
 
 **Independent Test**: Merge a visible change into `main`; the public address shows it within 10 minutes (quickstart scenarios 2–4).
 
-- [ ] T007 [US1] Add the `deploy` job to `.github/workflows/pages.yml` per contracts/pipeline.md "Job `deploy`": `needs: check`, permissions `pages: write` and `id-token: write`, environment `github-pages` with `url: ${{ steps.deployment.outputs.page_url }}`, `timeout-minutes: 10`, steps `actions/checkout@v7.0.1`, `actions/configure-pages@v6.0.0`, `actions/upload-pages-artifact@v5.0.0` with `path: web` (data-model.md `Published version.files`), `actions/deploy-pages@v5.0.1` with `id: deployment` (data-model.md `Published version.url`)
+- [X] T007 [US1] Add the `deploy` job to `.github/workflows/pages.yml` per contracts/pipeline.md "Job `deploy`": `needs: check`, permissions `pages: write` and `id-token: write`, environment `github-pages` with `url: ${{ steps.deployment.outputs.page_url }}`, `timeout-minutes: 10`, steps `actions/checkout@v7.0.1`, `actions/configure-pages@v6.0.0`, `actions/upload-pages-artifact@v5.0.0` with `path: web` (data-model.md `Published version.files`), `actions/deploy-pages@v5.0.1` with `id: deployment` (data-model.md `Published version.url`)
 
 **Checkpoint**: Merging publishes the game.
 
@@ -66,7 +66,7 @@ run in order.
 
 **Independent Test**: A pull request or push with a failing check shows the failure and no `deploy` job runs (quickstart scenario 7).
 
-- [ ] T008 [US2] Confirm in `.github/workflows/pages.yml` that `deploy` depends on `check` and that no `continue-on-error` or `if: always()` lets a failed or cancelled `check` reach `deploy` (data-model.md `Pipeline run.result`, `Pipeline run.jobs`)
+- [X] T008 [US2] Confirm in `.github/workflows/pages.yml` that `deploy` depends on `check` and that no `continue-on-error` or `if: always()` lets a failed or cancelled `check` reach `deploy` (data-model.md `Pipeline run.result`, `Pipeline run.jobs`)
 
 **Checkpoint**: The publish is gated by all checks.
 
@@ -78,7 +78,7 @@ run in order.
 
 **Independent Test**: Open a pull request; only `check` runs and its status shows on the pull request (quickstart scenario 1).
 
-- [ ] T009 [US3] Add `if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'` to the `deploy` job in `.github/workflows/pages.yml`, so pull requests and manual starts on other branches never publish (contracts/pipeline.md "Triggers"; data-model.md `Pipeline run.event`)
+- [X] T009 [US3] Add `if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'` to the `deploy` job in `.github/workflows/pages.yml`, so pull requests and manual starts on other branches never publish (contracts/pipeline.md "Triggers"; data-model.md `Pipeline run.event`)
 
 **Checkpoint**: Pull requests are checked and never publish.
 
@@ -90,8 +90,8 @@ run in order.
 
 **Independent Test**: After a publish, `git tag -l 'release-*'` lists a tag for today on that commit; a second publish the same day gets `-2` (quickstart scenarios 5–6).
 
-- [ ] T010 [US4] Add the `release` job to `.github/workflows/pages.yml` per contracts/pipeline.md "Job `release`": `needs: deploy`, permission `contents: write`, `timeout-minutes: 5`, `actions/checkout@v7.0.1` with `fetch-depth: 0`, a Bash step that picks the first free name `release-YYYY-MM-DD`, then `-2`, `-3`, … (UTC date; data-model.md `Release mark.name`), creates an annotated tag (data-model.md `Release mark.kind`) on `${{ github.sha }}` (data-model.md `Release mark.target`) with the bot identity `github-actions[bot]`, and pushes only that tag
-- [ ] T011 [US4] Run `actionlint .github/workflows/pages.yml` again (it runs `shellcheck` on the tag script) and fix every finding
+- [X] T010 [US4] Add the `release` job to `.github/workflows/pages.yml` per contracts/pipeline.md "Job `release`": `needs: deploy`, permission `contents: write`, `timeout-minutes: 5`, `actions/checkout@v7.0.1` with `fetch-depth: 0`, a Bash step that picks the first free name `release-YYYY-MM-DD`, then `-2`, `-3`, … (UTC date; data-model.md `Release mark.name`), creates an annotated tag (data-model.md `Release mark.kind`) on `${{ github.sha }}` (data-model.md `Release mark.target`) with the bot identity `github-actions[bot]`, and pushes only that tag
+- [X] T011 [US4] Run `actionlint .github/workflows/pages.yml` again (it runs `shellcheck` on the tag script) and fix every finding
 
 **Checkpoint**: Every publish leaves a release mark.
 
@@ -99,9 +99,9 @@ run in order.
 
 ## Phase 7: Polish & Cross-Cutting Concerns
 
-- [ ] T012 [P] Document in `README.md`: the live address, that merges to `main` publish automatically after the checks, the manual start, the `release-*` tags and their role as catalog baseline, and that screenshot tests run on macOS only
-- [ ] T013 Run the local checks from quickstart.md ("Local checks before pushing") and fix any failure
-- [ ] T014 Simulate the `check` job locally as the runner does (`npm ci` in a clean clone with full history, then the job's commands with `CI=1`) and confirm the catalog baseline resolves; the on-GitHub scenarios are post-merge validation in quickstart.md, done by the maintainer
+- [X] T012 [P] Document in `README.md`: the live address, that merges to `main` publish automatically after the checks, the manual start, the `release-*` tags and their role as catalog baseline, and that screenshot tests run on macOS only
+- [X] T013 Run the local checks from quickstart.md ("Local checks before pushing") and fix any failure
+- [X] T014 Simulate the `check` job locally as the runner does (`npm ci` in a clean clone with full history, then the job's commands with `CI=1`) and confirm the catalog baseline resolves; the on-GitHub scenarios are post-merge validation in quickstart.md, done by the maintainer
 
 ---
 

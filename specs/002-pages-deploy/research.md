@@ -12,6 +12,7 @@ repos/<owner>/<repo>/releases/latest`.
 | `actions/configure-pages` | v6.0.0 |
 | `actions/upload-pages-artifact` | v5.0.0 |
 | `actions/deploy-pages` | v5.0.1 |
+| `actions/upload-artifact` | v7.0.2 (Playwright report on failure) |
 
 ## R1. Publishing method
 
@@ -102,6 +103,11 @@ repos/<owner>/<repo>/releases/latest`.
 - **Rationale**: `configure-pages` can enable Pages only with an admin
   token, which the workflow must not hold (FR-010). It is a one-off
   repository setting, done by the maintainer's own `gh` login.
+- **Finding (2026-11-23)**: the account's Pages use the custom domain
+  `alek.ws`, so the site is `https://alek.ws/websudoku/`. HTTPS was not
+  enforced, and plain `http` blocks the clipboard (FR-005). HTTPS is now
+  enforced on `olomix/olomix.github.io` and on this repository's Pages
+  (`https_enforced=true`).
 
 ## R9. Time limit
 

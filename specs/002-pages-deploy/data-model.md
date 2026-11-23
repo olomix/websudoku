@@ -16,7 +16,7 @@ This feature stores no application data. Its state is GitHub's own records.
 |-------|-------|
 | `commit` | The commit the run checked |
 | `files` | Exactly the contents of `web/` at that commit |
-| `url` | `https://olomix.github.io/websudoku/` |
+| `url` | `https://alek.ws/websudoku/` |
 
 Only one is live at a time. A new deployment replaces the old one whole.
 

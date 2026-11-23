@@ -7,6 +7,8 @@ const P = puzzle(100001);
 for (const scheme of ["light", "dark"]) {
   test(`board in ${scheme} theme`, async ({ page }, info) => {
     test.skip(!isDesktop(info.project.name), "desktop engines only");
+    // Baselines exist only for macOS (*-darwin.png); CI runs on Linux.
+    test.skip(process.platform !== "darwin", "screenshot baselines are macOS-only");
     await page.emulateMedia({ colorScheme: scheme });
     await open(page, P.id);
     await type(page, firstEmpty(P, 0), P.solution[firstEmpty(P, 0)]);
