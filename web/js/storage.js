@@ -112,6 +112,17 @@ export function loadGame() {
   return saved;
 }
 
+/** The saved game without taking its revision as read. */
+export const peekGame = () => read(KEYS.game);
+
+/**
+ * Record that this tab now holds the save with this revision.
+ * @param {unknown} rev
+ */
+export function markRead(rev) {
+  if (Number.isInteger(rev)) ownRev = Math.max(ownRev, /** @type {number} */ (rev));
+}
+
 /** True when another tab saved a newer game than this tab has. */
 export const isStale = () => storedRev() > ownRev;
 

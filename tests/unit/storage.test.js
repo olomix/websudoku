@@ -73,3 +73,23 @@ describe("save revisions across tabs", () => {
     expect(tabA.loadGame().puzzleId).toBe(5);
   });
 });
+
+describe("peek and markRead", () => {
+  it("peeking does not make a stale tab current; markRead does", async () => {
+    const mem = new Map();
+    globalThis.localStorage = {
+      getItem: (k) => (mem.has(k) ? mem.get(k) : null),
+      setItem: (k, v) => mem.set(k, v),
+      removeItem: (k) => mem.delete(k),
+    };
+    const tabA = await import(`../../web/js/storage.js?tab=c`);
+    const tabB = await import(`../../web/js/storage.js?tab=d`);
+    tabB.saveGame({ toJSON: () => ({ puzzleId: 7 }) });
+    const saved = tabA.peekGame();
+    expect(saved.puzzleId).toBe(7);
+    expect(tabA.isStale()).toBe(true);
+    expect(tabA.saveGame({ toJSON: () => ({ puzzleId: 1 }) })).toBe(false);
+    tabA.markRead(saved.rev);
+    expect(tabA.isStale()).toBe(false);
+  });
+});

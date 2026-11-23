@@ -22,11 +22,15 @@ function git(...args) {
   }
 }
 
-/** Latest release-* tag, else main (guarantee 5). */
+const resolves = (ref) => git("rev-parse", "--verify", "--quiet", `${ref}^{commit}`) != null;
+
+/** Latest release-* tag, else main, else origin/main (guarantee 5). */
 function baselineRef() {
   const tags = git("tag", "--list", "release-*", "--sort=-creatordate")?.trim().split("\n")
     .filter(Boolean);
-  return tags?.length ? tags[0] : "main";
+  if (tags?.length) return tags[0];
+  // A clone of a feature branch often has only the remote-tracking main.
+  return resolves("main") || !resolves("origin/main") ? "main" : "origin/main";
 }
 
 describe.each(LEVELS)("level %i", (level) => {
@@ -57,8 +61,9 @@ describe.each(LEVELS)("level %i", (level) => {
   it("is append-only against the release baseline (5)", ({ skip }) => {
     const ref = baselineRef();
     // A missing baseline must fail: a silent skip would switch the guard off.
-    expect(git("rev-parse", "--verify", "--quiet", `${ref}^{commit}`),
-      `baseline ref ${ref} not found; fetch main and release-* tags`).not.toBeNull();
+    expect(resolves(ref),
+      `baseline ref ${ref} not found; run git fetch origin main:refs/remotes/origin/main --tags`)
+      .toBe(true);
     const old = git("show", `${ref}:web/puzzles/level-${level}.json`);
     if (old == null) skip(`no level-${level}.json at ${ref}`);
     const before = JSON.parse(/** @type {string} */ (old));

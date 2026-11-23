@@ -70,3 +70,21 @@ test("a catalog that cannot load does not replace the saved game", async ({ page
   await expect(page.locator(".info .id")).toHaveText("#300001");
   await expect(cell(page, a)).toHaveText("8");
 });
+
+test("an echo save of the same board keeps this tab's undo history", async ({ page, context }) => {
+  await open(page, P.id);
+  const other = await context.newPage();
+  await open(other, P.id);
+  const a = firstEmpty(P);
+  await type(page, a, 8);
+  await expect(cell(other, a)).toHaveText("8");
+  // The other tab saves the same board when it is hidden.
+  await other.evaluate(() => {
+    Object.defineProperty(document, "visibilityState", { configurable: true, get: () => "hidden" });
+    document.dispatchEvent(new Event("visibilitychange"));
+  });
+  await page.waitForTimeout(300);
+  await expect(page.getByRole("button", { name: "Undo" })).toBeEnabled();
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect(cell(page, a)).toHaveAttribute("data-value", "0");
+});

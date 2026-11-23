@@ -82,3 +82,13 @@ test("a slow older level choice does not replace a newer one", async ({ page }) 
   await page.waitForTimeout(2000);
   await expect(page).toHaveURL(/\?id=2\d{5}$/);
 });
+
+test("after a failed start, a level button recovers and the clock runs", async ({ page }) => {
+  await page.route("**/puzzles/level-1.json", (r) => r.abort());
+  await page.goto("/");
+  await expect(page.locator("#message")).toContainText("could not start");
+  await page.unroute("**/puzzles/level-1.json");
+  await page.locator(".levels button", { hasText: "Easy" }).click();
+  await expect(page.locator(".info .id")).toHaveText(/^#1\d{5}$/);
+  await expect(page.locator(".clock")).not.toHaveText("0:00", { timeout: 3000 });
+});

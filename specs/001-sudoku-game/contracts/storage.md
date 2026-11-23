@@ -29,7 +29,11 @@ absent. A failed write never stops the game.
 - `rev` increases by one on every save. A tab remembers the `rev` it last
   read or wrote. When the stored `rev` is newer (another tab saved), the tab
   does not write; it loads the newer save instead (on the `storage` event).
-  Starting a new puzzle on purpose writes regardless.
+  It counts the newer `rev` as read only once that game is in use. If the
+  newer save holds the same board, the tab keeps its own game (undo history,
+  Check marks, open dialogs) and only takes the longer elapsed time.
+  Starting a new puzzle on purpose writes regardless, and a newer save that
+  arrives while such a request loads waits until the request ends.
 - The 5-second save runs only in the focused tab.
 - A restored game is not written back on load.
 - Restore is rejected (key deleted) if a given cell in `values` differs from

@@ -250,18 +250,37 @@ function setAddress(id) {
 
 /** Only the newest puzzle request may replace the board. */
 let request = 0;
+/** Player puzzle requests still loading; another tab's save waits for them. */
+let pending = 0;
 const LOAD_ERROR = "The puzzle could not load. Check the connection and try again.";
 
-/** @param {1|2|3|4} level */
-async function openRandom(level) {
+/**
+ * Run a player's puzzle request. When it ends without starting a game, a
+ * newer save from another tab that arrived meanwhile is taken over.
+ * @param {(mine: number) => Promise<void>} fn
+ */
+async function playerRequest(fn) {
   const mine = ++request;
+  pending++;
   try {
-    const p = await getPuzzle(await randomId(level));
-    if (p && mine === request) start(p);
-  } catch (e) {
-    console.error(e);
-    if (mine === request) say(LOAD_ERROR);
+    await fn(mine);
+  } finally {
+    pending--;
+    if (!pending && storage.isStale()) void adoptSaved();
   }
+}
+
+/** @param {1|2|3|4} level */
+function openRandom(level) {
+  return playerRequest(async (mine) => {
+    try {
+      const p = await getPuzzle(await randomId(level));
+      if (p && mine === request) start(p);
+    } catch (e) {
+      console.error(e);
+      if (mine === request) say(LOAD_ERROR);
+    }
+  });
 }
 
 /**
@@ -269,36 +288,65 @@ async function openRandom(level) {
  * or cannot load.
  * @param {string} input
  */
-async function openById(input) {
-  const mine = ++request;
-  const parsed = parseId(input);
-  let p = null;
-  try {
-    p = parsed ? await getPuzzle(parsed.id) : null;
-  } catch (e) {
-    console.error(e);
-    if (mine === request) say(LOAD_ERROR);
-    return;
-  }
-  if (mine !== request) return;
-  if (!p) {
-    dialogs.showNotFound(input, () => void openRandom(game?.level ?? 1));
-    return;
-  }
-  if (p.id === game?.puzzleId) return;
-  start(p);
+function openById(input) {
+  return playerRequest(async (mine) => {
+    const parsed = parseId(input);
+    let p = null;
+    try {
+      p = parsed ? await getPuzzle(parsed.id) : null;
+    } catch (e) {
+      console.error(e);
+      if (mine === request) say(LOAD_ERROR);
+      return;
+    }
+    if (mine !== request) return;
+    if (!p) {
+      dialogs.showNotFound(input, () => void openRandom(game?.level ?? 1));
+      return;
+    }
+    if (p.id === game?.puzzleId) return;
+    start(p);
+  });
 }
 
-/** Take over a newer save written by another tab (contracts/storage.md). */
+/**
+ * Same puzzle and same board as the save, so nothing needs reloading.
+ * @param {any} saved
+ */
+function sameBoard(saved) {
+  if (!game || saved.puzzleId !== game.puzzleId) return false;
+  if ((saved.status === "solved") !== (game.status === "solved")) return false;
+  const eq = (/** @type {unknown} */ a, /** @type {number[]} */ b) =>
+    Array.isArray(a) && a.length === b.length && a.every((x, i) => x === b[i]);
+  return eq(saved.values, game.values) && eq(saved.candidates, game.candidates) &&
+    saved.assisted === game.assisted;
+}
+
+/**
+ * Take over a newer save written by another tab (contracts/storage.md).
+ * The tab counts as up to date only once the save is really in use, so a
+ * failed or superseded take-over never lets the old board overwrite it.
+ */
 async function adoptSaved() {
-  const saved = storage.loadGame();
+  if (pending) return;
+  const saved = storage.peekGame();
   if (!saved) return;
-  const mine = ++request;
-  const p = await getPuzzle(saved.puzzleId).catch(() => null);
-  if (p && mine === request) {
-    dialogs.close();
-    start(p, saved);
+  if (sameBoard(saved)) {
+    // An echo of this tab's own game: keep undo history, marks and dialogs.
+    if (saved.elapsedMs > game.elapsedMs) game.timer.set(saved.elapsedMs);
+    storage.markRead(saved.rev);
+    return;
   }
+  const at = request;
+  const p = await getPuzzle(saved.puzzleId).catch(() => null);
+  if (!p || at !== request || pending) return;
+  if (storage.peekGame()?.rev !== saved.rev) {
+    void adoptSaved();
+    return;
+  }
+  storage.markRead(saved.rev);
+  dialogs.close();
+  start(p, saved);
 }
 
 document.addEventListener("visibilitychange", () => {
@@ -337,7 +385,6 @@ async function boot() {
     await resumeOrRandom(saved);
     if (param !== null) dialogs.showNotFound(param, () => void openRandom(game.level));
   }
-  requestAnimationFrame(tick);
 }
 
 /** @param {any} saved */
@@ -349,6 +396,9 @@ async function resumeOrRandom(saved) {
   if (!game) throw new Error("no puzzle could load");
 }
 
+// Started before boot, so the clock runs even after a failed start that
+// the player recovers from with a level button.
+requestAnimationFrame(tick);
 boot().catch((e) => {
   console.error(e);
   say("The game could not start. Check the connection and reload the page.");
