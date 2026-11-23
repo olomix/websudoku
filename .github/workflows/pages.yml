@@ -112,12 +112,17 @@ jobs:
         env:
           SHA: ${{ github.sha }}
         run: |
-          # A re-run of only this job reuses deploy's old output, so check
-          # again: a newer commit may have been published and tagged since.
-          head=$(git ls-remote --exit-code origin refs/heads/main | cut -f1)
-          [ -n "$head" ] || { echo "::error::cannot read the head of main"; exit 1; }
-          if [ "$head" != "$SHA" ]; then
-            echo "Not tagged: $SHA is no longer the head of main ($head)." >> "$GITHUB_STEP_SUMMARY"
+          # A re-run of only this job reuses deploy's old output. Skip only
+          # when this commit already has a mark, or a newer published commit
+          # (which contains it) does; main moving on is not a reason, since
+          # this commit is live until the next deploy.
+          if [ -n "$(git tag --points-at "$SHA" --list 'release-*')" ]; then
+            echo "Not tagged: $SHA already has a release mark." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          newest=$(git tag --list 'release-*' --sort=-creatordate | head -n 1)
+          if [ -n "$newest" ] && git merge-base --is-ancestor "$SHA" "$newest"; then
+            echo "Not tagged: newer release $newest already contains $SHA." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
           base="release-$(date -u +%Y-%m-%d)"

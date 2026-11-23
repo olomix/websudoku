@@ -49,9 +49,12 @@ Needs `check`. Permissions `pages: write`, `id-token: write`. Environment
 Needs `deploy`; runs only when `deploy` reported `current=true`. Permission `contents: write`. Timeout 5 min.
 
 1. Checkout with tags.
-2. Check again that `github.sha` is the head of `main` (a re-run of only
-   this job reuses `deploy`'s old output); if not, note it in the summary
-   and tag nothing. If the head of `main` cannot be read, fail.
+2. Tag nothing (and note why in the summary) when a `release-*` tag
+   already points at `github.sha`, or when the newest `release-*` tag is a
+   descendant of it (a newer publish already contains it). A re-run of only
+   this job reuses `deploy`'s old output, so this is checked here; `main`
+   moving on is not a reason to skip, because this commit stays live until
+   the next deploy.
 3. Pick the first free name of `release-YYYY-MM-DD`,
    `release-YYYY-MM-DD-2`, … (UTC date).
 4. Create an annotated tag on the deployed commit and push only that tag.
