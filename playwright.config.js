@@ -3,8 +3,14 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "tests/e2e",
   fullyParallel: true,
-  reporter: "list",
-  use: { baseURL: "http://localhost:8080" },
+  // In CI a committed test.only must fail the publish gate, and a failure
+  // needs a report to download.
+  forbidOnly: !!process.env.CI,
+  reporter: process.env.CI ? [["list"], ["html", { open: "never" }]] : "list",
+  use: {
+    baseURL: "http://localhost:8080",
+    trace: process.env.CI ? "retain-on-failure" : "off",
+  },
   webServer: {
     command: "npm start",
     url: "http://localhost:8080/",

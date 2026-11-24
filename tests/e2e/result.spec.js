@@ -34,7 +34,19 @@ test("solving the same ID again shows the personal best", async ({ page }) => {
   await open(page, 100002);
   await open(page, P.id);
   await fill(page, P);
-  await expect(page.locator('dialog#completion [data-field="your-best"]')).toContainText(first.trim());
+  // Either solve may be faster; the best shown is the faster one, and it is
+  // marked new only when the second solve beat the first.
+  const secs = (t) => t.trim().split(":").reduce((a, x) => a * 60 + Number(x), 0);
+  const second = await page.locator('dialog#completion [data-field="time"]').textContent();
+  const best = page.locator('dialog#completion [data-field="your-best"]');
+  if (secs(second) < secs(first)) {
+    await expect(best).toHaveText(`${second.trim()} (new)`);
+  } else if (secs(second) > secs(first)) {
+    await expect(best).toHaveText(first.trim());
+  } else {
+    // Same shown second: the milliseconds decide whether it is a new best.
+    await expect(best).toHaveText(new RegExp(`^${first.trim()}( \\(new\\))?$`));
+  }
 });
 
 test("new puzzle opens another puzzle of the same level", async ({ page }) => {
